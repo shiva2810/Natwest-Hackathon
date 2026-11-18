@@ -127,4 +127,7 @@ with st.expander("Evidence expiring soon"):
 
 st.subheader("Audit report")
 with st.expander("Preview the report the user receives"):
-    components.html(report_html, height=900, scrolling=True)
+    if hasattr(st, "iframe"):   # report HTML is fully escaped by seam/report.py
+        st.iframe(report_html, height=900)
+    else:
+        components.html(report_html, height=900, scrolling=True)

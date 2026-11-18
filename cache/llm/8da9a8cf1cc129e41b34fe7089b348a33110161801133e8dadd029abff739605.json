@@ -1,0 +1,5 @@
+{
+ "model": "claude-opus-5-5",
+ "prompt": "Route an auditor's question for a compliance tool covering three departments: HR, Finance, Legal.\nReturn ONLY JSON: {\"intent\": \"audit\" | \"what_if\" | \"unclear\", \"domains\": [subset of \"HR\",\"Finance\",\"Legal\"]}\n- \"audit\": the question asks whether something is compliant / ready / failing. Pick the departments it\n  concerns; a launch-readiness or general question means all three.\n- \"what_if\": the question describes a hypothetical change to people, suppliers, contracts, approvals, etc.\n- \"unclear\": not about compliance.\nQuestion: Is Legal in good shape?",
+ "response": "{\"intent\": \"audit\", \"domains\": [\"Legal\"]}"
+}
