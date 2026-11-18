@@ -1,0 +1,957 @@
+{
+ "tables": {
+  "hr/headcount_plan.csv": {
+   "key": [
+    "department"
+   ],
+   "columns": [
+    "department",
+    "approved_heads",
+    "filled_heads",
+    "open_reqs",
+    "weekly_contract_hours_per_head",
+    "hiring_status",
+    "frozen_until",
+    "notes"
+   ],
+   "rows": [
+    {
+     "department": "Operations",
+     "_label": "Operations"
+    },
+    {
+     "department": "Finance",
+     "_label": "Finance"
+    },
+    {
+     "department": "Legal",
+     "_label": "Legal"
+    },
+    {
+     "department": "Product",
+     "_label": "Product"
+    },
+    {
+     "department": "HR",
+     "_label": "HR"
+    },
+    {
+     "department": "Sales",
+     "_label": "Sales"
+    },
+    {
+     "department": "Support",
+     "_label": "Support"
+    },
+    {
+     "department": "Engineering",
+     "_label": "Engineering"
+    },
+    {
+     "department": "Marketing",
+     "_label": "Marketing"
+    }
+   ]
+  },
+  "hr/product_staffing.csv": {
+   "key": [
+    "employee_id",
+    "product"
+   ],
+   "columns": [
+    "employee_id",
+    "product",
+    "role_on_product",
+    "allocation_pct",
+    "can_sell_or_onboard",
+    "selling_from"
+   ],
+   "rows": [
+    {
+     "employee_id": "E004",
+     "product": "QuickPay",
+     "_label": "E004/QuickPay"
+    },
+    {
+     "employee_id": "E010",
+     "product": "QuickPay",
+     "_label": "E010/QuickPay"
+    },
+    {
+     "employee_id": "E006",
+     "product": "QuickPay",
+     "_label": "E006/QuickPay"
+    },
+    {
+     "employee_id": "E007",
+     "product": "QuickPay",
+     "_label": "E007/QuickPay"
+    },
+    {
+     "employee_id": "E011",
+     "product": "QuickPay",
+     "_label": "E011/QuickPay"
+    },
+    {
+     "employee_id": "E012",
+     "product": "QuickPay",
+     "_label": "E012/QuickPay"
+    },
+    {
+     "employee_id": "E013",
+     "product": "QuickPay",
+     "_label": "E013/QuickPay"
+    },
+    {
+     "employee_id": "E014",
+     "product": "QuickPay",
+     "_label": "E014/QuickPay"
+    },
+    {
+     "employee_id": "E015",
+     "product": "QuickPay",
+     "_label": "E015/QuickPay"
+    },
+    {
+     "employee_id": "E016",
+     "product": "QuickPay",
+     "_label": "E016/QuickPay"
+    },
+    {
+     "employee_id": "E017",
+     "product": "QuickPay",
+     "_label": "E017/QuickPay"
+    },
+    {
+     "employee_id": "E018",
+     "product": "QuickPay",
+     "_label": "E018/QuickPay"
+    },
+    {
+     "employee_id": "E019",
+     "product": "QuickPay",
+     "_label": "E019/QuickPay"
+    },
+    {
+     "employee_id": "E020",
+     "product": "QuickPay",
+     "_label": "E020/QuickPay"
+    },
+    {
+     "employee_id": "E021",
+     "product": "QuickPay",
+     "_label": "E021/QuickPay"
+    },
+    {
+     "employee_id": "E022",
+     "product": "QuickPay",
+     "_label": "E022/QuickPay"
+    },
+    {
+     "employee_id": "E023",
+     "product": "QuickPay",
+     "_label": "E023/QuickPay"
+    },
+    {
+     "employee_id": "E024",
+     "product": "QuickPay",
+     "_label": "E024/QuickPay"
+    }
+   ]
+  },
+  "hr/roster.csv": {
+   "key": [
+    "employee_id"
+   ],
+   "columns": [
+    "employee_id",
+    "full_name",
+    "department",
+    "job_title",
+    "manager_id",
+    "status",
+    "last_working_day",
+    "leaver_checklist",
+    "location"
+   ],
+   "rows": [
+    {
+     "employee_id": "E001",
+     "_label": "E001"
+    },
+    {
+     "employee_id": "E002",
+     "_label": "E002"
+    },
+    {
+     "employee_id": "E003",
+     "_label": "E003"
+    },
+    {
+     "employee_id": "E004",
+     "_label": "E004"
+    },
+    {
+     "employee_id": "E005",
+     "_label": "E005"
+    },
+    {
+     "employee_id": "E006",
+     "_label": "E006"
+    },
+    {
+     "employee_id": "E007",
+     "_label": "E007"
+    },
+    {
+     "employee_id": "E008",
+     "_label": "E008"
+    },
+    {
+     "employee_id": "E009",
+     "_label": "E009"
+    },
+    {
+     "employee_id": "E010",
+     "_label": "E010"
+    },
+    {
+     "employee_id": "E011",
+     "_label": "E011"
+    },
+    {
+     "employee_id": "E012",
+     "_label": "E012"
+    },
+    {
+     "employee_id": "E013",
+     "_label": "E013"
+    },
+    {
+     "employee_id": "E014",
+     "_label": "E014"
+    },
+    {
+     "employee_id": "E015",
+     "_label": "E015"
+    },
+    {
+     "employee_id": "E016",
+     "_label": "E016"
+    },
+    {
+     "employee_id": "E017",
+     "_label": "E017"
+    },
+    {
+     "employee_id": "E018",
+     "_label": "E018"
+    },
+    {
+     "employee_id": "E019",
+     "_label": "E019"
+    },
+    {
+     "employee_id": "E020",
+     "_label": "E020"
+    },
+    {
+     "employee_id": "E021",
+     "_label": "E021"
+    },
+    {
+     "employee_id": "E022",
+     "_label": "E022"
+    },
+    {
+     "employee_id": "E023",
+     "_label": "E023"
+    },
+    {
+     "employee_id": "E024",
+     "_label": "E024"
+    },
+    {
+     "employee_id": "E025",
+     "_label": "E025"
+    },
+    {
+     "employee_id": "E026",
+     "_label": "E026"
+    },
+    {
+     "employee_id": "E027",
+     "_label": "E027"
+    },
+    {
+     "employee_id": "E028",
+     "_label": "E028"
+    }
+   ]
+  },
+  "hr/training_records.csv": {
+   "key": [
+    "employee_id",
+    "course_code"
+   ],
+   "columns": [
+    "employee_id",
+    "course_code",
+    "status",
+    "completed_date",
+    "expiry_date"
+   ],
+   "rows": [
+    {
+     "employee_id": "E001",
+     "course_code": "COC-100",
+     "_label": "E001/COC-100"
+    },
+    {
+     "employee_id": "E001",
+     "course_code": "DPA-110",
+     "_label": "E001/DPA-110"
+    },
+    {
+     "employee_id": "E002",
+     "course_code": "COC-100",
+     "_label": "E002/COC-100"
+    },
+    {
+     "employee_id": "E002",
+     "course_code": "DPA-110",
+     "_label": "E002/DPA-110"
+    },
+    {
+     "employee_id": "E003",
+     "course_code": "COC-100",
+     "_label": "E003/COC-100"
+    },
+    {
+     "employee_id": "E003",
+     "course_code": "DPA-110",
+     "_label": "E003/DPA-110"
+    },
+    {
+     "employee_id": "E004",
+     "course_code": "COC-100",
+     "_label": "E004/COC-100"
+    },
+    {
+     "employee_id": "E004",
+     "course_code": "DPA-110",
+     "_label": "E004/DPA-110"
+    },
+    {
+     "employee_id": "E005",
+     "course_code": "COC-100",
+     "_label": "E005/COC-100"
+    },
+    {
+     "employee_id": "E005",
+     "course_code": "DPA-110",
+     "_label": "E005/DPA-110"
+    },
+    {
+     "employee_id": "E006",
+     "course_code": "COC-100",
+     "_label": "E006/COC-100"
+    },
+    {
+     "employee_id": "E006",
+     "course_code": "DPA-110",
+     "_label": "E006/DPA-110"
+    },
+    {
+     "employee_id": "E007",
+     "course_code": "COC-100",
+     "_label": "E007/COC-100"
+    },
+    {
+     "employee_id": "E007",
+     "course_code": "DPA-110",
+     "_label": "E007/DPA-110"
+    },
+    {
+     "employee_id": "E008",
+     "course_code": "COC-100",
+     "_label": "E008/COC-100"
+    },
+    {
+     "employee_id": "E008",
+     "course_code": "DPA-110",
+     "_label": "E008/DPA-110"
+    },
+    {
+     "employee_id": "E009",
+     "course_code": "COC-100",
+     "_label": "E009/COC-100"
+    },
+    {
+     "employee_id": "E009",
+     "course_code": "DPA-110",
+     "_label": "E009/DPA-110"
+    },
+    {
+     "employee_id": "E010",
+     "course_code": "COC-100",
+     "_label": "E010/COC-100"
+    },
+    {
+     "employee_id": "E010",
+     "course_code": "DPA-110",
+     "_label": "E010/DPA-110"
+    },
+    {
+     "employee_id": "E011",
+     "course_code": "COC-100",
+     "_label": "E011/COC-100"
+    },
+    {
+     "employee_id": "E011",
+     "course_code": "DPA-110",
+     "_label": "E011/DPA-110"
+    },
+    {
+     "employee_id": "E012",
+     "course_code": "COC-100",
+     "_label": "E012/COC-100"
+    },
+    {
+     "employee_id": "E012",
+     "course_code": "DPA-110",
+     "_label": "E012/DPA-110"
+    },
+    {
+     "employee_id": "E013",
+     "course_code": "COC-100",
+     "_label": "E013/COC-100"
+    },
+    {
+     "employee_id": "E013",
+     "course_code": "DPA-110",
+     "_label": "E013/DPA-110"
+    },
+    {
+     "employee_id": "E014",
+     "course_code": "COC-100",
+     "_label": "E014/COC-100"
+    },
+    {
+     "employee_id": "E014",
+     "course_code": "DPA-110",
+     "_label": "E014/DPA-110"
+    },
+    {
+     "employee_id": "E015",
+     "course_code": "COC-100",
+     "_label": "E015/COC-100"
+    },
+    {
+     "employee_id": "E015",
+     "course_code": "DPA-110",
+     "_label": "E015/DPA-110"
+    },
+    {
+     "employee_id": "E016",
+     "course_code": "COC-100",
+     "_label": "E016/COC-100"
+    },
+    {
+     "employee_id": "E016",
+     "course_code": "DPA-110",
+     "_label": "E016/DPA-110"
+    },
+    {
+     "employee_id": "E017",
+     "course_code": "COC-100",
+     "_label": "E017/COC-100"
+    },
+    {
+     "employee_id": "E017",
+     "course_code": "DPA-110",
+     "_label": "E017/DPA-110"
+    },
+    {
+     "employee_id": "E018",
+     "course_code": "COC-100",
+     "_label": "E018/COC-100"
+    },
+    {
+     "employee_id": "E018",
+     "course_code": "DPA-110",
+     "_label": "E018/DPA-110"
+    },
+    {
+     "employee_id": "E019",
+     "course_code": "COC-100",
+     "_label": "E019/COC-100"
+    },
+    {
+     "employee_id": "E019",
+     "course_code": "DPA-110",
+     "_label": "E019/DPA-110"
+    },
+    {
+     "employee_id": "E020",
+     "course_code": "COC-100",
+     "_label": "E020/COC-100"
+    },
+    {
+     "employee_id": "E020",
+     "course_code": "DPA-110",
+     "_label": "E020/DPA-110"
+    },
+    {
+     "employee_id": "E021",
+     "course_code": "COC-100",
+     "_label": "E021/COC-100"
+    },
+    {
+     "employee_id": "E021",
+     "course_code": "DPA-110",
+     "_label": "E021/DPA-110"
+    },
+    {
+     "employee_id": "E022",
+     "course_code": "COC-100",
+     "_label": "E022/COC-100"
+    },
+    {
+     "employee_id": "E022",
+     "course_code": "DPA-110",
+     "_label": "E022/DPA-110"
+    },
+    {
+     "employee_id": "E023",
+     "course_code": "COC-100",
+     "_label": "E023/COC-100"
+    },
+    {
+     "employee_id": "E023",
+     "course_code": "DPA-110",
+     "_label": "E023/DPA-110"
+    },
+    {
+     "employee_id": "E024",
+     "course_code": "COC-100",
+     "_label": "E024/COC-100"
+    },
+    {
+     "employee_id": "E024",
+     "course_code": "DPA-110",
+     "_label": "E024/DPA-110"
+    },
+    {
+     "employee_id": "E025",
+     "course_code": "COC-100",
+     "_label": "E025/COC-100"
+    },
+    {
+     "employee_id": "E025",
+     "course_code": "DPA-110",
+     "_label": "E025/DPA-110"
+    },
+    {
+     "employee_id": "E026",
+     "course_code": "COC-100",
+     "_label": "E026/COC-100"
+    },
+    {
+     "employee_id": "E026",
+     "course_code": "DPA-110",
+     "_label": "E026/DPA-110"
+    },
+    {
+     "employee_id": "E027",
+     "course_code": "COC-100",
+     "_label": "E027/COC-100"
+    },
+    {
+     "employee_id": "E027",
+     "course_code": "DPA-110",
+     "_label": "E027/DPA-110"
+    },
+    {
+     "employee_id": "E006",
+     "course_code": "PCT-101",
+     "_label": "E006/PCT-101"
+    },
+    {
+     "employee_id": "E011",
+     "course_code": "PCT-101",
+     "_label": "E011/PCT-101"
+    },
+    {
+     "employee_id": "E012",
+     "course_code": "PCT-101",
+     "_label": "E012/PCT-101"
+    },
+    {
+     "employee_id": "E013",
+     "course_code": "PCT-101",
+     "_label": "E013/PCT-101"
+    },
+    {
+     "employee_id": "E014",
+     "course_code": "PCT-101",
+     "_label": "E014/PCT-101"
+    },
+    {
+     "employee_id": "E015",
+     "course_code": "PCT-101",
+     "_label": "E015/PCT-101"
+    },
+    {
+     "employee_id": "E016",
+     "course_code": "PCT-101",
+     "_label": "E016/PCT-101"
+    },
+    {
+     "employee_id": "E017",
+     "course_code": "PCT-101",
+     "_label": "E017/PCT-101"
+    },
+    {
+     "employee_id": "E018",
+     "course_code": "PCT-101",
+     "_label": "E018/PCT-101"
+    },
+    {
+     "employee_id": "E019",
+     "course_code": "PCT-101",
+     "_label": "E019/PCT-101"
+    }
+   ]
+  },
+  "finance/approval_limits.csv": {
+   "key": [
+    "approver_id"
+   ],
+   "columns": [
+    "approver_id",
+    "role_title",
+    "scope",
+    "limit_gbp",
+    "delegate_id",
+    "valid_from",
+    "valid_to"
+   ],
+   "rows": [
+    {
+     "approver_id": "E001",
+     "_label": "E001"
+    },
+    {
+     "approver_id": "E002",
+     "_label": "E002"
+    },
+    {
+     "approver_id": "E004",
+     "_label": "E004"
+    },
+    {
+     "approver_id": "E008",
+     "_label": "E008"
+    },
+    {
+     "approver_id": "E027",
+     "_label": "E027"
+    }
+   ]
+  },
+  "finance/budget.csv": {
+   "key": [
+    "line_id"
+   ],
+   "columns": [
+    "line_id",
+    "fiscal_year",
+    "cost_center",
+    "product",
+    "line_item",
+    "category",
+    "approved_budget_gbp",
+    "committed_gbp",
+    "spent_ytd_gbp",
+    "owner_id",
+    "coverage_notes"
+   ],
+   "rows": [
+    {
+     "line_id": "B-001",
+     "_label": "B-001"
+    },
+    {
+     "line_id": "B-002",
+     "_label": "B-002"
+    },
+    {
+     "line_id": "B-003",
+     "_label": "B-003"
+    },
+    {
+     "line_id": "B-004",
+     "_label": "B-004"
+    },
+    {
+     "line_id": "B-005",
+     "_label": "B-005"
+    },
+    {
+     "line_id": "B-006",
+     "_label": "B-006"
+    },
+    {
+     "line_id": "B-007",
+     "_label": "B-007"
+    },
+    {
+     "line_id": "B-008",
+     "_label": "B-008"
+    },
+    {
+     "line_id": "B-009",
+     "_label": "B-009"
+    },
+    {
+     "line_id": "B-010",
+     "_label": "B-010"
+    }
+   ]
+  },
+  "finance/purchase_orders.csv": {
+   "key": [
+    "po_id"
+   ],
+   "columns": [
+    "po_id",
+    "vendor_id",
+    "description",
+    "amount_gbp",
+    "cost_center",
+    "product",
+    "requested_by",
+    "approver",
+    "approval_date",
+    "status"
+   ],
+   "rows": [
+    {
+     "po_id": "PO-2026-0398",
+     "_label": "PO-2026-0398"
+    },
+    {
+     "po_id": "PO-2026-0405",
+     "_label": "PO-2026-0405"
+    },
+    {
+     "po_id": "PO-2026-0412",
+     "_label": "PO-2026-0412"
+    },
+    {
+     "po_id": "PO-2026-0420",
+     "_label": "PO-2026-0420"
+    },
+    {
+     "po_id": "PO-2026-0431",
+     "_label": "PO-2026-0431"
+    },
+    {
+     "po_id": "PO-2026-0436",
+     "_label": "PO-2026-0436"
+    },
+    {
+     "po_id": "PO-2026-0450",
+     "_label": "PO-2026-0450"
+    }
+   ]
+  },
+  "finance/vendors.csv": {
+   "key": [
+    "vendor_id"
+   ],
+   "columns": [
+    "vendor_id",
+    "vendor_name",
+    "service_description",
+    "country",
+    "handles_customer_data",
+    "data_processing_region",
+    "dd_status",
+    "dd_completed_date",
+    "dd_scope",
+    "annual_value_gbp",
+    "contract_ref",
+    "business_owner_id",
+    "status"
+   ],
+   "rows": [
+    {
+     "vendor_id": "V001",
+     "_label": "V001"
+    },
+    {
+     "vendor_id": "V002",
+     "_label": "V002"
+    },
+    {
+     "vendor_id": "V003",
+     "_label": "V003"
+    },
+    {
+     "vendor_id": "V004",
+     "_label": "V004"
+    },
+    {
+     "vendor_id": "V005",
+     "_label": "V005"
+    },
+    {
+     "vendor_id": "V006",
+     "_label": "V006"
+    },
+    {
+     "vendor_id": "V008",
+     "_label": "V008"
+    }
+   ]
+  },
+  "legal/contracts_register.csv": {
+   "key": [
+    "contract_id"
+   ],
+   "columns": [
+    "contract_id",
+    "counterparty",
+    "vendor_id",
+    "contract_type",
+    "start_date",
+    "end_date",
+    "auto_renew",
+    "dpa_required",
+    "dpa_signed",
+    "legal_owner_id",
+    "notes"
+   ],
+   "rows": [
+    {
+     "contract_id": "C-2025-011",
+     "_label": "C-2025-011"
+    },
+    {
+     "contract_id": "C-2025-011-A",
+     "_label": "C-2025-011-A"
+    },
+    {
+     "contract_id": "C-2026-031",
+     "_label": "C-2026-031"
+    },
+    {
+     "contract_id": "C-2025-014",
+     "_label": "C-2025-014"
+    },
+    {
+     "contract_id": "C-2025-020",
+     "_label": "C-2025-020"
+    },
+    {
+     "contract_id": "C-2026-007",
+     "_label": "C-2026-007"
+    },
+    {
+     "contract_id": "C-2026-012",
+     "_label": "C-2026-012"
+    },
+    {
+     "contract_id": "C-2026-040",
+     "_label": "C-2026-040"
+    }
+   ]
+  },
+  "legal/obligations_register.csv": {
+   "key": [
+    "obligation_id"
+   ],
+   "columns": [
+    "obligation_id",
+    "source_doc",
+    "clause",
+    "statement",
+    "obligation_type",
+    "owner_id",
+    "applies_from",
+    "self_attested_status",
+    "last_reviewed",
+    "evidence_required",
+    "evidence_location",
+    "evidence_status",
+    "parameters"
+   ],
+   "rows": [
+    {
+     "obligation_id": "OBL-L-001",
+     "_label": "OBL-L-001"
+    },
+    {
+     "obligation_id": "OBL-L-002",
+     "_label": "OBL-L-002"
+    },
+    {
+     "obligation_id": "OBL-L-003",
+     "_label": "OBL-L-003"
+    },
+    {
+     "obligation_id": "OBL-L-004",
+     "_label": "OBL-L-004"
+    },
+    {
+     "obligation_id": "OBL-L-005",
+     "_label": "OBL-L-005"
+    },
+    {
+     "obligation_id": "OBL-L-006",
+     "_label": "OBL-L-006"
+    },
+    {
+     "obligation_id": "OBL-L-007",
+     "_label": "OBL-L-007"
+    },
+    {
+     "obligation_id": "OBL-L-008",
+     "_label": "OBL-L-008"
+    },
+    {
+     "obligation_id": "OBL-L-009",
+     "_label": "OBL-L-009"
+    },
+    {
+     "obligation_id": "OBL-L-010",
+     "_label": "OBL-L-010"
+    }
+   ]
+  }
+ },
+ "docs": {
+  "legal/product_approval.json": [
+   "product",
+   "approval_id",
+   "approved_version",
+   "approved_on",
+   "valid_until",
+   "scope",
+   "accountable_senior_manager",
+   "legal_register_status"
+  ],
+  "product/product_record.json": [
+   "product",
+   "description",
+   "live_version",
+   "release_candidate",
+   "launch_date",
+   "product_owner",
+   "engineering_lead",
+   "change_control_request_filed"
+  ]
+ }
+}

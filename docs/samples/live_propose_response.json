@@ -1,0 +1,112 @@
+{
+ "event": {
+  "event_id": "LIVE",
+  "date": "2026-11-19",
+  "description": "Liam O'Connor (E007), Head of Customer Support, resigns and is serving notice with a last working day of 2026-11-25.",
+  "question": "What if Liam O'Connor, Head of Customer Support, resigns with a last day of 25 November?",
+  "changes": [
+   {
+    "file": "hr/roster.csv",
+    "op": "update",
+    "match": {
+     "employee_id": "E007"
+    },
+    "set": {
+     "status": "serving_notice",
+     "last_working_day": "2026-11-25",
+     "leaver_checklist": "initiated"
+    }
+   }
+  ]
+ },
+ "preview": [
+  {
+   "file": "hr/roster.csv",
+   "op": "update",
+   "target": "E007",
+   "field": "status",
+   "before": "active",
+   "after": "serving_notice"
+  },
+  {
+   "file": "hr/roster.csv",
+   "op": "update",
+   "target": "E007",
+   "field": "last_working_day",
+   "before": "",
+   "after": "2026-11-25"
+  },
+  {
+   "file": "hr/roster.csv",
+   "op": "update",
+   "target": "E007",
+   "field": "leaver_checklist",
+   "before": "NA",
+   "after": "initiated"
+  }
+ ],
+ "opened": [
+  "orphaned_owner:E007"
+ ],
+ "closed": [],
+ "changed": [],
+ "status_before": "no_go",
+ "status_after": "no_go",
+ "departments": {
+  "Finance": {
+   "before": "no_go",
+   "after": "no_go"
+  },
+  "HR": {
+   "before": "no_go",
+   "after": "no_go"
+  },
+  "Legal": {
+   "before": "no_go",
+   "after": "no_go"
+  },
+  "Product": {
+   "before": "no_go",
+   "after": "no_go"
+  }
+ },
+ "seams_after": [
+  {
+   "id": "data_residency_breach:OBL-L-003",
+   "title": "1 supplier(s) process customer data outside UK/EEA, against the customer terms",
+   "severity": "critical",
+   "status": "open"
+  },
+  {
+   "id": "version_drift:OBL-L-001",
+   "title": "Approval APR-2026-014 covers v1.4 but QuickPay launches v2.0 with 3 material change(s) and no change control request",
+   "severity": "high",
+   "status": "open"
+  },
+  {
+   "id": "orphaned_owner:E004",
+   "title": "Meera Iyer leaves on 2026-11-27 but still holds 7 role(s) needed at launch",
+   "severity": "high",
+   "status": "open"
+  },
+  {
+   "id": "support_capacity_gap:OBL-L-005",
+   "title": "Promised 336 staffed hours/week but staffing covers 240; Support hiring frozen until 2027-03-31",
+   "severity": "high",
+   "status": "open"
+  },
+  {
+   "id": "orphaned_owner:E007",
+   "title": "Liam O'Connor leaves on 2026-11-25 but still holds 2 role(s) needed at launch",
+   "severity": "high",
+   "status": "open"
+  },
+  {
+   "id": "seller_training_gap:OBL-L-002",
+   "title": "2 seller(s) will not hold valid PCT-101 on their first sales date",
+   "severity": "high",
+   "status": "open"
+  }
+ ],
+ "signoff_would_reset": false
+}

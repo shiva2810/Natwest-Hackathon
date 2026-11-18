@@ -1,0 +1,197 @@
+{
+ "verify": {
+  "ok": true,
+  "entries": 3,
+  "broken_at": null,
+  "head": "9c32abd9e765be47076073f93614c51c66f3e94c9594194cde793c2c7bc7b9cb"
+ },
+ "entries": [
+  {
+   "seq": 0,
+   "at": "2026-11-18T08:12:16+00:00",
+   "kind": "run",
+   "actor": "agent",
+   "policy_version": "tiers-2026.11.18-b",
+   "data": {
+    "rules_version": "rules-2026.11.18-b",
+    "records": 19,
+    "source_sha": "2298bbff9a922f12b084e32740e9c7ccd2a31f1ec0c25d53790ea7fd77610e1f",
+    "pipeline": [
+     "check_departments",
+     "build_graph",
+     "detect_seams",
+     "score",
+     "referee",
+     "propose_drafts"
+    ],
+    "departments": {
+     "Finance": {
+      "met": 2,
+      "unmet": 2,
+      "unknown": 0
+     },
+     "HR": {
+      "met": 4,
+      "unmet": 1,
+      "unknown": 0
+     },
+     "Legal": {
+      "met": 8,
+      "unmet": 1,
+      "unknown": 1
+     }
+    },
+    "seams": [
+     "data_residency_breach:OBL-L-003",
+     "orphaned_owner:E004",
+     "seller_training_gap:OBL-L-002",
+     "support_capacity_gap:OBL-L-005",
+     "version_drift:OBL-L-001"
+    ],
+    "drafts": [
+     "notify_owner:data_residency_breach:OBL-L-003",
+     "notify_owner:seller_training_gap:OBL-L-002",
+     "notify_owner:support_capacity_gap:OBL-L-005",
+     "notify_owner:version_drift:OBL-L-001",
+     "reassign_owner:orphaned_owner:E004"
+    ]
+   },
+   "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+   "hash": "b8fc1cb89a59d1ba2189d8fe8913b345f8b0883e0ddb2b33f23066777ffc056f"
+  },
+  {
+   "seq": 1,
+   "at": "2026-11-18T08:12:16+00:00",
+   "kind": "event",
+   "actor": "event-stream",
+   "policy_version": "tiers-2026.11.18-b",
+   "data": {
+    "event": {
+     "id": "EV-01",
+     "date": "2026-11-19",
+     "description": "Chloe Dubois (E014) completes Payments Conduct Training (PCT-101).",
+     "files": [
+      "hr/training_records.csv"
+     ]
+    },
+    "cause": null,
+    "rechecked_nodes": [
+     "B-001",
+     "B-002",
+     "B-003",
+     "B-004",
+     "B-005",
+     "B-006",
+     "B-007",
+     "B-010",
+     "E004",
+     "E006",
+     "E007",
+     "E010",
+     "E011",
+     "E012",
+     "E013",
+     "E014",
+     "E015",
+     "E016",
+     "E017",
+     "E018",
+     "E019",
+     "E020",
+     "E021",
+     "E022",
+     "E023",
+     "E024",
+     "OBL-L-001",
+     "OBL-L-002",
+     "OBL-L-003",
+     "OBL-L-005",
+     "OBL-L-006",
+     "OBL-L-007",
+     "OBL-L-009",
+     "PO-2026-0398",
+     "PO-2026-0405",
+     "PO-2026-0412",
+     "PO-2026-0420",
+     "PO-2026-0450",
+     "V001",
+     "V002",
+     "V004",
+     "prod-quickpay"
+    ],
+    "selective_matches_full": true,
+    "opened": [],
+    "closed": [],
+    "changed": [
+     "seller_training_gap:OBL-L-002"
+    ],
+    "status_before": "no_go",
+    "status_after": "no_go",
+    "invalidated_signoff": null,
+    "departments_before": {
+     "Finance": "conditional",
+     "HR": "conditional",
+     "Legal": "conditional",
+     "Product": "go"
+    },
+    "departments_after": {
+     "Finance": "conditional",
+     "HR": "conditional",
+     "Legal": "conditional",
+     "Product": "go"
+    },
+    "pipeline": [
+     "check_departments",
+     "build_graph",
+     "detect_seams",
+     "score",
+     "referee",
+     "propose_drafts"
+    ]
+   },
+   "prev_hash": "b8fc1cb89a59d1ba2189d8fe8913b345f8b0883e0ddb2b33f23066777ffc056f",
+   "hash": "3c9e5be26b74efc2763eaa692b28f8323752201c173f5a85051633aacb675142"
+  },
+  {
+   "seq": 2,
+   "at": "2026-11-18T08:12:19+00:00",
+   "kind": "what_if_proposed",
+   "actor": "agent",
+   "policy_version": "tiers-2026.11.18-b",
+   "data": {
+    "question": "What if Liam O'Connor, Head of Customer Support, resigns with a last day of 25 November?",
+    "event": {
+     "event_id": "LIVE",
+     "date": "2026-11-19",
+     "description": "Liam O'Connor (E007), Head of Customer Support, resigns and is serving notice with a last working day of 2026-11-25.",
+     "question": "What if Liam O'Connor, Head of Customer Support, resigns with a last day of 25 November?",
+     "changes": [
+      {
+       "file": "hr/roster.csv",
+       "op": "update",
+       "match": {
+        "employee_id": "E007"
+       },
+       "set": {
+        "status": "serving_notice",
+        "last_working_day": "2026-11-25",
+        "leaver_checklist": "initiated"
+       }
+      }
+     ]
+    },
+    "predicted": {
+     "opened": [
+      "orphaned_owner:E007"
+     ],
+     "closed": [],
+     "changed": [],
+     "status_before": "no_go",
+     "status_after": "no_go"
+    }
+   },
+   "prev_hash": "3c9e5be26b74efc2763eaa692b28f8323752201c173f5a85051633aacb675142",
+   "hash": "9c32abd9e765be47076073f93614c51c66f3e94c9594194cde793c2c7bc7b9cb"
+  }
+ ]
+}

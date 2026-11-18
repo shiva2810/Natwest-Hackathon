@@ -16,7 +16,7 @@ from seam.client import SeamClient, SeamError
 ICON = {"go": "🟢 GO", "conditional": "🟡 CONDITIONAL", "no_go": "🔴 NO-GO"}
 EXAMPLES = [
     "What if StreamLedger moves its processing to Frankfurt?",
-    "What if Priya Sharma resigns with a last day of 28 November?",
+    "What if Liam O'Connor, Head of Customer Support, resigns with a last day of 25 November?",
     "What if Ben Foster renews PCT-101 today?",
     "What if Legal re-approves QuickPay for version 2.0?",
 ]

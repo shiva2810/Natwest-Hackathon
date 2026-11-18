@@ -1,0 +1,1749 @@
+[
+ {
+  "at": "2026-11-18T08:12:16+00:00",
+  "before": {
+   "company": "Aldermere Pay Ltd (fictional)",
+   "source": "dataset",
+   "product": {
+    "id": "prod-quickpay",
+    "name": "QuickPay",
+    "version": "2.0",
+    "launch_date": "2026-12-01"
+   },
+   "as_of": "2026-11-18",
+   "overall": "no_go",
+   "blocking_seams": [
+    "data_residency_breach:OBL-L-003",
+    "version_drift:OBL-L-001",
+    "orphaned_owner:E004",
+    "support_capacity_gap:OBL-L-005"
+   ],
+   "departments": {
+    "Finance": {
+     "status": "no_go",
+     "own_view": "conditional",
+     "records": 4,
+     "unmet": [
+      "FIN-3.2",
+      "FIN-3.3"
+     ],
+     "unknown": [],
+     "open_seams": [
+      "data_residency_breach:OBL-L-003",
+      "orphaned_owner:E004",
+      "support_capacity_gap:OBL-L-005"
+     ],
+     "findings": [
+      {
+       "record": "FIN-3.2",
+       "status": "unmet",
+       "basis": "data",
+       "finding": "1 PO(s) approved above the approver's limit",
+       "items": [
+        "PO-2026-0412 62,000 approved by E008 (limit 50,000)"
+       ]
+      },
+      {
+       "record": "FIN-3.3",
+       "status": "unmet",
+       "basis": "data",
+       "finding": "1 product PO(s) above 40,000 without ASM approval",
+       "items": [
+        "PO-2026-0412 62,000 (QuickPay) approved by E008, not the ASM"
+       ]
+      }
+     ],
+     "self_attested": []
+    },
+    "HR": {
+     "status": "no_go",
+     "own_view": "conditional",
+     "records": 5,
+     "unmet": [
+      "HR-4.2"
+     ],
+     "unknown": [],
+     "open_seams": [
+      "orphaned_owner:E004",
+      "support_capacity_gap:OBL-L-005",
+      "seller_training_gap:OBL-L-002"
+     ],
+     "findings": [
+      {
+       "record": "HR-4.2",
+       "status": "unmet",
+       "basis": "data",
+       "finding": "1 active employee(s) without valid DPA-110",
+       "items": [
+        "E022 Lucas Meyer"
+       ]
+      }
+     ],
+     "self_attested": []
+    },
+    "Legal": {
+     "status": "no_go",
+     "own_view": "conditional",
+     "records": 10,
+     "unmet": [
+      "OBL-L-008"
+     ],
+     "unknown": [
+      "OBL-L-006"
+     ],
+     "open_seams": [
+      "data_residency_breach:OBL-L-003",
+      "version_drift:OBL-L-001",
+      "orphaned_owner:E004",
+      "support_capacity_gap:OBL-L-005",
+      "seller_training_gap:OBL-L-002"
+     ],
+     "findings": [
+      {
+       "record": "OBL-L-006",
+       "status": "unknown",
+       "basis": "no_evidence",
+       "finding": "notification not on file yet; due 2026-11-24, so not overdue",
+       "items": []
+      },
+      {
+       "record": "OBL-L-008",
+       "status": "unmet",
+       "basis": "data",
+       "finding": "1 contract(s) past end date",
+       "items": [
+        "C-2025-011-A EuroCloud Hosting GmbH: Capacity add-on addendum ended 2026-10-31 (Renewal not actioned)"
+       ]
+      }
+     ],
+     "self_attested": [
+      "OBL-L-002",
+      "OBL-L-003",
+      "OBL-L-005",
+      "OBL-L-007",
+      "OBL-L-009"
+     ]
+    },
+    "Product": {
+     "status": "no_go",
+     "own_view": "go",
+     "records": 0,
+     "unmet": [],
+     "unknown": [],
+     "open_seams": [
+      "data_residency_breach:OBL-L-003",
+      "version_drift:OBL-L-001",
+      "orphaned_owner:E004"
+     ],
+     "findings": [],
+     "self_attested": []
+    }
+   },
+   "seams": [
+    {
+     "id": "data_residency_breach:OBL-L-003",
+     "type": "data_residency_breach",
+     "anchor": "OBL-L-003",
+     "title": "1 supplier(s) process customer data outside UK/EEA, against the customer terms",
+     "departments": [
+      "Finance",
+      "Legal",
+      "Product"
+     ],
+     "nodes": [
+      "OBL-L-003",
+      "prod-quickpay",
+      "V002"
+     ],
+     "record_ids": [
+      "OBL-L-003"
+     ],
+     "fix_owner_id": "E004",
+     "effective_on": "2026-12-01",
+     "facts": {
+      "promise": "Customer payment data is processed and stored only within the UK or EEA, including by sub-processors.",
+      "allowed_regions": [
+       "UK",
+       "EEA"
+      ],
+      "breaches": [
+       "V002 StreamLedger Inc: customer payment data processed in US-East (United States); C-2026-031 DPA signed=True"
+      ],
+      "score_reasons": [
+       "base 90 for data_residency_breach",
+       "+10 bites in 13 days",
+       "+5 spans 3 departments"
+      ],
+      "explained_by": "llm"
+     },
+     "severity": "critical",
+     "score": 100.0,
+     "explanation": "Our customer terms promise that customer payment data is processed and stored only within the UK or EEA, including by sub-processors. However, supplier V002 StreamLedger Inc processes customer payment data in US-East (United States), which breaks that promise even though its DPA (C-2026-031) is signed. Finance, Legal and Product each own part of this, so the gap sits between teams and needs a joint decision before launch.",
+     "fix_options": [
+      "Product and Finance ask StreamLedger Inc to move processing of our customer payment data to a UK or EEA region. Legal then confirms the change under DPA C-2026-031.",
+      "Finance and Product replace StreamLedger Inc with a supplier that processes customer payment data only in the UK or EEA.",
+      "Legal revises the customer terms to disclose and permit processing in the United States by sub-processors. This only works if the business accepts changing the promise to customers."
+     ],
+     "status": "open",
+     "waiver": null,
+     "basis": [
+      "Contract: Customer Terms v2.0 clause 7.2 (UK/EEA only)",
+      "EU law: GDPR Ch. V transfers; DORA Art. 30(2)(b) processing locations"
+     ],
+     "blocks_launch": true,
+     "fix_owner": "Meera Iyer"
+    },
+    {
+     "id": "version_drift:OBL-L-001",
+     "type": "version_drift",
+     "anchor": "OBL-L-001",
+     "title": "Approval APR-2026-014 covers v1.4 but QuickPay launches v2.0 with 3 material change(s) and no change control request",
+     "departments": [
+      "Legal",
+      "Product"
+     ],
+     "nodes": [
+      "prod-quickpay",
+      "OBL-L-001",
+      "OBL-L-007"
+     ],
+     "record_ids": [
+      "OBL-L-001",
+      "OBL-L-007"
+     ],
+     "fix_owner_id": "E004",
+     "effective_on": "2026-12-01",
+     "facts": {
+      "approved_version": "1.4",
+      "launch_version": "2.0",
+      "product": "QuickPay",
+      "approval_id": "APR-2026-014",
+      "approval_valid_until": "2027-06-12",
+      "material_changes": [
+       "CHG-01 Cross-border payments to EU beneficiaries (new_feature)",
+       "CHG-02 Transaction analytics and fraud scoring via StreamLedger (new_third_party_processor)",
+       "CHG-03 Premium support tier with 24x7 support (new_service_commitment)"
+      ],
+      "change_control_filed": false,
+      "score_reasons": [
+       "base 85 for version_drift",
+       "+10 bites in 13 days",
+       "+5 affects 2 obligations"
+      ],
+      "explained_by": "llm"
+     },
+     "severity": "high",
+     "score": 100.0,
+     "explanation": "Legal's approval APR-2026-014 covers QuickPay version 1.4, but Product is launching version 2.0, which adds 3 material changes: cross-border payments to EU beneficiaries (CHG-01), transaction analytics and fraud scoring via the new third-party processor StreamLedger (CHG-02), and a 24x7 premium support tier (CHG-03). No change control request has been filed for these changes. The approval remains valid until 2027-06-12, but only for v1.4, so v2.0 is currently launching without approval.",
+     "fix_options": [
+      "Product files a change control request covering CHG-01, CHG-02 and CHG-03 so Legal can review them and amend APR-2026-014, or issue a new approval, to cover v2.0 before launch.",
+      "Delay the v2.0 launch until Legal approves v2.0. Until then, keep v1.4 live under the existing APR-2026-014 approval.",
+      "Launch only the scope already approved by disabling the three material changes (EU cross-border payments, StreamLedger analytics and fraud scoring, and the 24x7 premium support tier). Then release each one only after change control is filed and Legal approves it."
+     ],
+     "status": "open",
+     "waiver": null,
+     "basis": [
+      "Internal policy: Product Change Control Policy 2",
+      "EU law: DORA Art. 9 ICT change management"
+     ],
+     "blocks_launch": true,
+     "fix_owner": "Meera Iyer"
+    },
+    {
+     "id": "orphaned_owner:E004",
+     "type": "orphaned_owner",
+     "anchor": "E004",
+     "title": "Meera Iyer leaves on 2026-11-27 but still holds 7 role(s) needed at launch",
+     "departments": [
+      "Finance",
+      "HR",
+      "Legal",
+      "Product"
+     ],
+     "nodes": [
+      "E004",
+      "OBL-L-001",
+      "OBL-L-003",
+      "OBL-L-006",
+      "prod-quickpay",
+      "prod-quickpay",
+      "AL-E004",
+      "PO-2026-0450"
+     ],
+     "record_ids": [
+      "OBL-L-001",
+      "OBL-L-003",
+      "OBL-L-006"
+     ],
+     "fix_owner_id": null,
+     "effective_on": "2026-11-27",
+     "facts": {
+      "person": "Meera Iyer",
+      "role": "Head of Payments Product",
+      "active": true,
+      "leaving_on": "2026-11-27",
+      "launch_date": "2026-12-01",
+      "roles": [
+       "owner of OBL-L-001: Each payments product must hold a current, unexpired Legal approval.",
+       "owner of OBL-L-003: Customer payment data is processed and stored only within the UK or EE",
+       "owner of OBL-L-006: The regulator is notified at least five business days before launching",
+       "accountable senior manager on approval APR-2026-014 for QuickPay",
+       "product owner of QuickPay",
+       "sole approver for 'QuickPay product spend' (limit 250,000, no delegate)",
+       "approver of pending PO-2026-0450 (45,000, Launch monitoring and on-call tooling)"
+      ],
+      "obligations": [
+       "Each payments product must hold a current, unexpired Legal approval.",
+       "Customer payment data is processed and stored only within the UK or EEA, including by sub-processors.",
+       "The regulator is notified at least five business days before launching a new payments feature."
+      ],
+      "score_reasons": [
+       "base 60 for orphaned_owner",
+       "+10 bites in 9 days",
+       "+10 spans 4 departments",
+       "+5 affects 3 obligations"
+      ],
+      "explained_by": "llm"
+     },
+     "severity": "high",
+     "score": 85.0,
+     "explanation": "Meera Iyer, Head of Payments Product, leaves on 2026-11-27, four days before the 2026-12-01 launch, but she still holds 7 roles the launch depends on across Legal, Finance, HR and Product. These roles are: owner of three Legal obligations (OBL-L-001 Legal approval, OBL-L-003 UK/EEA data location, OBL-L-006 regulator notification at least five business days before launch); accountable senior manager on approval APR-2026-014 for QuickPay; product owner of QuickPay; sole approver for 'QuickPay product spend' (limit 250,000) with no delegate; and approver of pending PO-2026-0450 (45,000, launch monitoring and on-call tooling). Once she leaves, each of these will have no owner, and the spend approval will have no backup.",
+     "fix_options": [
+      "Before 2026-11-27, name successors and formally reassign ownership of OBL-L-001, OBL-L-003 and OBL-L-006, the product owner role for QuickPay, and the accountable senior manager role on APR-2026-014 (Legal, Product and HR to confirm the handover).",
+      "Have Finance add a delegate or replacement approver for 'QuickPay product spend' (limit 250,000), and get pending PO-2026-0450 (45,000) either approved by Meera before she leaves or reassigned to the new approver.",
+      "If successors cannot be confirmed before 2026-11-27, escalate a decision on holding the 2026-12-01 launch until every one of the 7 roles has an active owner."
+     ],
+     "status": "open",
+     "waiver": null,
+     "basis": [
+      "EU law: GDPR Art. 5(2) accountability; DORA Art. 5",
+      "Internal policy: HR 6.2 leaver handover; Finance 3.3 ASM approval"
+     ],
+     "blocks_launch": true,
+     "fix_owner": null
+    },
+    {
+     "id": "support_capacity_gap:OBL-L-005",
+     "type": "support_capacity_gap",
+     "anchor": "OBL-L-005",
+     "title": "Promised 336 staffed hours/week but staffing covers 240; Support hiring frozen until 2027-03-31",
+     "departments": [
+      "Finance",
+      "HR",
+      "Legal"
+     ],
+     "nodes": [
+      "OBL-L-005",
+      "prod-quickpay",
+      "B-001",
+      "dept:Support",
+      "E019",
+      "E020",
+      "E021",
+      "E022",
+      "E023",
+      "E024"
+     ],
+     "record_ids": [
+      "OBL-L-005"
+     ],
+     "fix_owner_id": "E007",
+     "effective_on": "2026-12-01",
+     "facts": {
+      "promise": "Premium customers receive 24x7 support, with at least two agents staffed at all times and a first response within 15 minutes for payment failures.",
+      "required_hours_per_week": 336.0,
+      "staffed_hours_per_week": 240.0,
+      "gap_hours": 96.0,
+      "agents": 6,
+      "budget_coverage": [
+       "B-001 Support staff (6 FTE): Business hours Mon-Fri 08:00-18:00; no out-of-hours line"
+      ],
+      "hiring_frozen_until": "2027-03-31",
+      "score_reasons": [
+       "base 70 for support_capacity_gap",
+       "+10 bites in 13 days",
+       "+5 spans 3 departments"
+      ],
+      "explained_by": "llm"
+     },
+     "severity": "high",
+     "score": 85.0,
+     "explanation": "The promise to Premium customers requires 336 staffed agent-hours per week (24x7 support, at least two agents at all times, and a 15-minute first response for payment failures), but the 6 budgeted support staff provide only 240 hours, leaving a 96-hour weekly gap. The budget line (B-001) covers only business hours, Mon-Fri 08:00-18:00, with no out-of-hours line, so nights and weekends have no coverage at all. HR cannot close the gap by hiring because Support hiring is frozen until 2027-03-31.",
+     "fix_options": [
+      "Legal revises the Premium promise to match funded coverage (business hours Mon-Fri 08:00-18:00) and removes or rescopes the 24x7, two-agent, and 15-minute payment-failure commitments before launch.",
+      "Finance funds an out-of-hours support line, and HR seeks an exception to the hiring freeze, to cover the 96-hour weekly gap, including nights and weekends.",
+      "Delay the 24x7 Premium commitment until Support hiring reopens after 2027-03-31, and launch now with only the support terms the current 6-agent staffing can meet."
+     ],
+     "status": "open",
+     "waiver": null,
+     "basis": [
+      "Contract: Customer Terms v2.0 clause 9.1 (24x7, two agents)",
+      "EU law: Working Time Directive 2003/88/EC"
+     ],
+     "blocks_launch": true,
+     "fix_owner": "Liam O'Connor"
+    },
+    {
+     "id": "seller_training_gap:OBL-L-002",
+     "type": "seller_training_gap",
+     "anchor": "OBL-L-002",
+     "title": "3 seller(s) will not hold valid PCT-101 on their first sales date",
+     "departments": [
+      "HR",
+      "Legal"
+     ],
+     "nodes": [
+      "OBL-L-002",
+      "prod-quickpay",
+      "E013",
+      "E014",
+      "E015"
+     ],
+     "record_ids": [
+      "OBL-L-002"
+     ],
+     "fix_owner_id": "E006",
+     "effective_on": "2026-12-01",
+     "facts": {
+      "course": "PCT-101",
+      "requirement": "Only employees holding valid Payments Conduct Training (PCT-101, 12 months) may sell or onboard customers to a payments product.",
+      "sellers_without_valid_training": [
+       "E013 Ben Foster: PCT-101 expires 2026-11-25, first sale 2026-12-01",
+       "E014 Chloe Dubois: PCT-101 not started, first sale 2026-12-01",
+       "E015 Dmitri Volkov: PCT-101 not started, first sale 2026-12-01"
+      ],
+      "hr_mandatory_list_includes_course": false,
+      "score_reasons": [
+       "base 60 for seller_training_gap",
+       "+10 bites in 13 days"
+      ],
+      "explained_by": "llm"
+     },
+     "severity": "high",
+     "score": 70.0,
+     "explanation": "Legal requires that only employees holding valid Payments Conduct Training (PCT-101, valid for 12 months) may sell or onboard customers to a payments product, but HR's mandatory training list does not include PCT-101. As a result, 3 sellers scheduled to make their first sales on 2026-12-01 will not be compliant: Ben Foster's (E013) PCT-101 expires on 2026-11-25, and Chloe Dubois (E014) and Dmitri Volkov (E015) have not started the course.",
+     "fix_options": [
+      "Get E013 Ben Foster to renew PCT-101 before it expires on 2026-11-25, and get E014 Chloe Dubois and E015 Dmitri Volkov to complete PCT-101 before their first sale date of 2026-12-01.",
+      "Hold back any seller who does not have valid PCT-101 from selling or onboarding payments customers until they complete the course. This means delaying their 2026-12-01 start rather than letting them sell without valid training.",
+      "Have HR add PCT-101 to its mandatory training list so that Legal's requirement is tracked and enforced automatically, and future sellers do not reach a first sale date without valid training."
+     ],
+     "status": "open",
+     "waiver": null,
+     "basis": [
+      "Internal policy: Conduct Policy 5.3 (PCT-101 on date of sale)",
+      "EU law: GDPR Art. 39(1)(b) staff training"
+     ],
+     "blocks_launch": false,
+     "fix_owner": "Neha Kapoor"
+    }
+   ],
+   "drafts": [
+    {
+     "id": "notify_owner:data_residency_breach:OBL-L-003",
+     "action": "notify_owner",
+     "seam_id": "data_residency_breach:OBL-L-003",
+     "summary": "Notify Helena Brandt (Chief Operating Officer): 1 supplier(s) process customer data outside UK/EEA, against the customer terms (owner Meera Iyer leaves 2026-11-27; routed to their manager)",
+     "params": {
+      "to": "E001",
+      "message": "Our customer terms promise that customer payment data is processed and stored only within the UK or EEA, including by sub-processors. However, supplier V002 StreamLedger Inc processes customer payment data in US-East (United States), which breaks that promise even though its DPA (C-2026-031) is signed. Finance, Legal and Product each own part of this, so the gap sits between teams and needs a joint decision before launch."
+     },
+     "status": "pending",
+     "created_at": "2026-11-18T08:12:16+00:00",
+     "decision": null
+    },
+    {
+     "id": "notify_owner:version_drift:OBL-L-001",
+     "action": "notify_owner",
+     "seam_id": "version_drift:OBL-L-001",
+     "summary": "Notify Helena Brandt (Chief Operating Officer): Approval APR-2026-014 covers v1.4 but QuickPay launches v2.0 with 3 material change(s) and no change control request (owner Meera Iyer leaves 2026-11-27; routed to their manager)",
+     "params": {
+      "to": "E001",
+      "message": "Legal's approval APR-2026-014 covers QuickPay version 1.4, but Product is launching version 2.0, which adds 3 material changes: cross-border payments to EU beneficiaries (CHG-01), transaction analytics and fraud scoring via the new third-party processor StreamLedger (CHG-02), and a 24x7 premium support tier (CHG-03). No change control request has been filed for these changes. The approval remains valid until 2027-06-12, but only for v1.4, so v2.0 is currently launching without approval."
+     },
+     "status": "pending",
+     "created_at": "2026-11-18T08:12:16+00:00",
+     "decision": null
+    },
+    {
+     "id": "reassign_owner:orphaned_owner:E004",
+     "action": "reassign_owner",
+     "seam_id": "orphaned_owner:E004",
+     "summary": "Reassign 3 obligation(s) from Meera Iyer to a successor (approver names the successor)",
+     "params": {
+      "record_ids": [
+       "OBL-L-001",
+       "OBL-L-003",
+       "OBL-L-006"
+      ],
+      "owner_id": null
+     },
+     "status": "pending",
+     "created_at": "2026-11-18T08:12:16+00:00",
+     "decision": null
+    },
+    {
+     "id": "notify_owner:support_capacity_gap:OBL-L-005",
+     "action": "notify_owner",
+     "seam_id": "support_capacity_gap:OBL-L-005",
+     "summary": "Notify Liam O'Connor (Head of Customer Support): Promised 336 staffed hours/week but staffing covers 240; Support hiring frozen until 2027-03-31",
+     "params": {
+      "to": "E007",
+      "message": "The promise to Premium customers requires 336 staffed agent-hours per week (24x7 support, at least two agents at all times, and a 15-minute first response for payment failures), but the 6 budgeted support staff provide only 240 hours, leaving a 96-hour weekly gap. The budget line (B-001) covers only business hours, Mon-Fri 08:00-18:00, with no out-of-hours line, so nights and weekends have no coverage at all. HR cannot close the gap by hiring because Support hiring is frozen until 2027-03-31."
+     },
+     "status": "pending",
+     "created_at": "2026-11-18T08:12:16+00:00",
+     "decision": null
+    },
+    {
+     "id": "notify_owner:seller_training_gap:OBL-L-002",
+     "action": "notify_owner",
+     "seam_id": "seller_training_gap:OBL-L-002",
+     "summary": "Notify Neha Kapoor (Head of SME Sales): 3 seller(s) will not hold valid PCT-101 on their first sales date",
+     "params": {
+      "to": "E006",
+      "message": "Legal requires that only employees holding valid Payments Conduct Training (PCT-101, valid for 12 months) may sell or onboard customers to a payments product, but HR's mandatory training list does not include PCT-101. As a result, 3 sellers scheduled to make their first sales on 2026-12-01 will not be compliant: Ben Foster's (E013) PCT-101 expires on 2026-11-25, and Chloe Dubois (E014) and Dmitri Volkov (E015) have not started the course."
+     },
+     "status": "pending",
+     "created_at": "2026-11-18T08:12:16+00:00",
+     "decision": null
+    }
+   ],
+   "people": [
+    {
+     "id": "E001",
+     "name": "Helena Brandt",
+     "role": "Chief Operating Officer"
+    },
+    {
+     "id": "E002",
+     "name": "Arjun Rao",
+     "role": "Head of Finance"
+    },
+    {
+     "id": "E003",
+     "name": "Sofia Marchetti",
+     "role": "General Counsel"
+    },
+    {
+     "id": "E004",
+     "name": "Meera Iyer",
+     "role": "Head of Payments Product"
+    },
+    {
+     "id": "E005",
+     "name": "Tom Alder",
+     "role": "Head of HR"
+    },
+    {
+     "id": "E006",
+     "name": "Neha Kapoor",
+     "role": "Head of SME Sales"
+    },
+    {
+     "id": "E007",
+     "name": "Liam O'Connor",
+     "role": "Head of Customer Support"
+    },
+    {
+     "id": "E008",
+     "name": "Yusuf Demir",
+     "role": "Procurement Manager"
+    },
+    {
+     "id": "E009",
+     "name": "Grace Kim",
+     "role": "Legal Counsel"
+    },
+    {
+     "id": "E010",
+     "name": "Priya Sharma",
+     "role": "Engineering Lead"
+    },
+    {
+     "id": "E011",
+     "name": "Carlos Mendes",
+     "role": "Sales Executive"
+    },
+    {
+     "id": "E012",
+     "name": "Aisha Khan",
+     "role": "Sales Executive"
+    },
+    {
+     "id": "E013",
+     "name": "Ben Foster",
+     "role": "Sales Executive"
+    },
+    {
+     "id": "E014",
+     "name": "Chloe Dubois",
+     "role": "Sales Executive"
+    },
+    {
+     "id": "E015",
+     "name": "Dmitri Volkov",
+     "role": "Sales Executive"
+    },
+    {
+     "id": "E016",
+     "name": "Eva Lindqvist",
+     "role": "Sales Executive"
+    },
+    {
+     "id": "E017",
+     "name": "Farid Hassan",
+     "role": "Sales Executive"
+    },
+    {
+     "id": "E018",
+     "name": "Hannah Weiss",
+     "role": "Sales Executive"
+    },
+    {
+     "id": "E019",
+     "name": "Isabel Torres",
+     "role": "Support Agent"
+    },
+    {
+     "id": "E020",
+     "name": "Jamal Brooks",
+     "role": "Support Agent"
+    },
+    {
+     "id": "E021",
+     "name": "Kavya Menon",
+     "role": "Support Agent"
+    },
+    {
+     "id": "E022",
+     "name": "Lucas Meyer",
+     "role": "Support Agent"
+    },
+    {
+     "id": "E023",
+     "name": "Mina Park",
+     "role": "Support Agent"
+    },
+    {
+     "id": "E024",
+     "name": "Noah Fischer",
+     "role": "Support Agent"
+    },
+    {
+     "id": "E025",
+     "name": "Olivia Grant",
+     "role": "HR Business Partner"
+    },
+    {
+     "id": "E026",
+     "name": "Pavel Novak",
+     "role": "Finance Analyst"
+    },
+    {
+     "id": "E027",
+     "name": "Quentin Hale",
+     "role": "Marketing Manager"
+    }
+   ],
+   "events": [
+    {
+     "event_id": "EV-01",
+     "date": "2026-11-19",
+     "description": "Chloe Dubois (E014) completes Payments Conduct Training (PCT-101).",
+     "applied": false
+    },
+    {
+     "event_id": "EV-02",
+     "date": "2026-11-20",
+     "description": "Regulator notification for the v2.0 launch is filed and the copy is stored.",
+     "applied": false
+    },
+    {
+     "event_id": "EV-03",
+     "date": "2026-11-23",
+     "description": "New identity-verification supplier VerifyPoint Inc (US) is onboarded and added to the QuickPay data flows. Finance and Legal paperwork is complete.",
+     "applied": false
+    },
+    {
+     "event_id": "EV-04",
+     "date": "2026-11-25",
+     "description": "Legal names Priya Sharma (E010) as the new accountable senior manager and reassigns E004's obligations. HR updates the staffing sheet. Finance's approval table is not updated.",
+     "applied": false
+    },
+    {
+     "event_id": "EV-05",
+     "date": "2026-11-27",
+     "description": "Meera Iyer (E004) works her last day. The pending monitoring purchase order is still routed to her.",
+     "applied": false
+    },
+    {
+     "event_id": "EV-06",
+     "date": "2026-11-30",
+     "description": "Finance adds Priya Sharma (E010) to the approval table and reroutes the pending purchase order to her.",
+     "applied": false
+    }
+   ],
+   "scenarios": [
+    {
+     "name": "decoy_turns_real",
+     "event_id": "WHATIF-decoy",
+     "description": "Harbor Analytics (US) is wired into QuickPay to analyse customer payment data.",
+     "applied": false
+    },
+    {
+     "name": "fix_change_control",
+     "event_id": "WHATIF-change-control",
+     "description": "Product files change control; Legal re-approves QuickPay for v2.0.",
+     "applied": false
+    },
+    {
+     "name": "fix_data_residency",
+     "event_id": "WHATIF-residency",
+     "description": "StreamLedger moves QuickPay processing to its Frankfurt region.",
+     "applied": false
+    },
+    {
+     "name": "fix_seller_training",
+     "event_id": "WHATIF-seller-training",
+     "description": "Chloe Dubois, Ben Foster and Dmitri Volkov complete PCT-101.",
+     "applied": false
+    },
+    {
+     "name": "fix_support_capacity",
+     "event_id": "WHATIF-support",
+     "description": "COO and Head of Finance approve a freeze exception; three support agents join QuickPay.",
+     "applied": false
+    },
+    {
+     "name": "general_counsel_resigns",
+     "event_id": "WHATIF-gc-resigns",
+     "description": "General Counsel Sofia Marchetti (E003) resigns; last working day 2026-11-28.",
+     "applied": false
+    },
+    {
+     "name": "new_seller_untrained",
+     "event_id": "WHATIF-new-seller",
+     "description": "A new sales executive joins QuickPay sales from launch day without PCT-101.",
+     "applied": false
+    }
+   ],
+   "signoff": {
+    "state": "pending"
+   },
+   "evidence_expiring": [
+    {
+     "what": "Ben Foster: PCT-101",
+     "expires_on": "2026-11-25"
+    },
+    {
+     "what": "C-2025-020 Harbor Analytics Inc: Subscription",
+     "expires_on": "2026-12-31"
+    },
+    {
+     "what": "C-2026-012 BrightMark Agency Ltd: Services agreement",
+     "expires_on": "2026-12-31"
+    },
+    {
+     "what": "Helena Brandt: COC-100",
+     "expires_on": "2027-01-12"
+    },
+    {
+     "what": "Arjun Rao: COC-100",
+     "expires_on": "2027-01-21"
+    },
+    {
+     "what": "Sofia Marchetti: COC-100",
+     "expires_on": "2027-01-30"
+    },
+    {
+     "what": "C-2026-007 LexAdvisory LLP: Engagement letter",
+     "expires_on": "2027-01-31"
+    },
+    {
+     "what": "Meera Iyer: COC-100",
+     "expires_on": "2027-02-08"
+    },
+    {
+     "what": "Helena Brandt: DPA-110",
+     "expires_on": "2027-02-09"
+    },
+    {
+     "what": "Tom Alder: COC-100",
+     "expires_on": "2027-02-17"
+    },
+    {
+     "what": "Arjun Rao: DPA-110",
+     "expires_on": "2027-02-18"
+    },
+    {
+     "what": "Farid Hassan: PCT-101",
+     "expires_on": "2027-02-18"
+    },
+    {
+     "what": "Neha Kapoor: COC-100",
+     "expires_on": "2027-02-26"
+    },
+    {
+     "what": "Sofia Marchetti: DPA-110",
+     "expires_on": "2027-02-27"
+    },
+    {
+     "what": "C-2025-011 EuroCloud Hosting GmbH: Master services agreement",
+     "expires_on": "2027-02-28"
+    },
+    {
+     "what": "Liam O'Connor: COC-100",
+     "expires_on": "2027-03-07"
+    },
+    {
+     "what": "Meera Iyer: DPA-110",
+     "expires_on": "2027-03-08"
+    },
+    {
+     "what": "Carlos Mendes: PCT-101",
+     "expires_on": "2027-03-10"
+    },
+    {
+     "what": "Yusuf Demir: COC-100",
+     "expires_on": "2027-03-16"
+    },
+    {
+     "what": "Tom Alder: DPA-110",
+     "expires_on": "2027-03-17"
+    }
+   ],
+   "policy_versions": {
+    "rules": "rules-2026.11.18-b",
+    "tiers": "tiers-2026.11.18-b"
+   },
+   "extraction": {
+    "records_by_department": {
+     "Finance": 4,
+     "HR": 5,
+     "Legal": 10
+    },
+    "quote_check": {
+     "checked": 19,
+     "failed": []
+    }
+   },
+   "last_verified": "2026-11-18T08:12:16+00:00",
+   "audit": {
+    "ok": true,
+    "entries": 1,
+    "broken_at": null,
+    "head": "b8fc1cb89a59d1ba2189d8fe8913b345f8b0883e0ddb2b33f23066777ffc056f"
+   },
+   "disclaimer": "Evidence-backed review on synthetic data, not a compliance certificate."
+  },
+  "after": {
+   "company": "Aldermere Pay Ltd (fictional)",
+   "source": "dataset",
+   "product": {
+    "id": "prod-quickpay",
+    "name": "QuickPay",
+    "version": "2.0",
+    "launch_date": "2026-12-01"
+   },
+   "as_of": "2026-11-19",
+   "overall": "no_go",
+   "blocking_seams": [
+    "data_residency_breach:OBL-L-003",
+    "version_drift:OBL-L-001",
+    "orphaned_owner:E004",
+    "support_capacity_gap:OBL-L-005"
+   ],
+   "departments": {
+    "Finance": {
+     "status": "no_go",
+     "own_view": "conditional",
+     "records": 4,
+     "unmet": [
+      "FIN-3.2",
+      "FIN-3.3"
+     ],
+     "unknown": [],
+     "open_seams": [
+      "data_residency_breach:OBL-L-003",
+      "orphaned_owner:E004",
+      "support_capacity_gap:OBL-L-005"
+     ],
+     "findings": [
+      {
+       "record": "FIN-3.2",
+       "status": "unmet",
+       "basis": "data",
+       "finding": "1 PO(s) approved above the approver's limit",
+       "items": [
+        "PO-2026-0412 62,000 approved by E008 (limit 50,000)"
+       ]
+      },
+      {
+       "record": "FIN-3.3",
+       "status": "unmet",
+       "basis": "data",
+       "finding": "1 product PO(s) above 40,000 without ASM approval",
+       "items": [
+        "PO-2026-0412 62,000 (QuickPay) approved by E008, not the ASM"
+       ]
+      }
+     ],
+     "self_attested": []
+    },
+    "HR": {
+     "status": "no_go",
+     "own_view": "conditional",
+     "records": 5,
+     "unmet": [
+      "HR-4.2"
+     ],
+     "unknown": [],
+     "open_seams": [
+      "orphaned_owner:E004",
+      "support_capacity_gap:OBL-L-005",
+      "seller_training_gap:OBL-L-002"
+     ],
+     "findings": [
+      {
+       "record": "HR-4.2",
+       "status": "unmet",
+       "basis": "data",
+       "finding": "1 active employee(s) without valid DPA-110",
+       "items": [
+        "E022 Lucas Meyer"
+       ]
+      }
+     ],
+     "self_attested": []
+    },
+    "Legal": {
+     "status": "no_go",
+     "own_view": "conditional",
+     "records": 10,
+     "unmet": [
+      "OBL-L-008"
+     ],
+     "unknown": [
+      "OBL-L-006"
+     ],
+     "open_seams": [
+      "data_residency_breach:OBL-L-003",
+      "version_drift:OBL-L-001",
+      "orphaned_owner:E004",
+      "support_capacity_gap:OBL-L-005",
+      "seller_training_gap:OBL-L-002"
+     ],
+     "findings": [
+      {
+       "record": "OBL-L-006",
+       "status": "unknown",
+       "basis": "no_evidence",
+       "finding": "notification not on file yet; due 2026-11-24, so not overdue",
+       "items": []
+      },
+      {
+       "record": "OBL-L-008",
+       "status": "unmet",
+       "basis": "data",
+       "finding": "1 contract(s) past end date",
+       "items": [
+        "C-2025-011-A EuroCloud Hosting GmbH: Capacity add-on addendum ended 2026-10-31 (Renewal not actioned)"
+       ]
+      }
+     ],
+     "self_attested": [
+      "OBL-L-002",
+      "OBL-L-003",
+      "OBL-L-005",
+      "OBL-L-007",
+      "OBL-L-009"
+     ]
+    },
+    "Product": {
+     "status": "no_go",
+     "own_view": "go",
+     "records": 0,
+     "unmet": [],
+     "unknown": [],
+     "open_seams": [
+      "data_residency_breach:OBL-L-003",
+      "version_drift:OBL-L-001",
+      "orphaned_owner:E004"
+     ],
+     "findings": [],
+     "self_attested": []
+    }
+   },
+   "seams": [
+    {
+     "id": "data_residency_breach:OBL-L-003",
+     "type": "data_residency_breach",
+     "anchor": "OBL-L-003",
+     "title": "1 supplier(s) process customer data outside UK/EEA, against the customer terms",
+     "departments": [
+      "Finance",
+      "Legal",
+      "Product"
+     ],
+     "nodes": [
+      "OBL-L-003",
+      "prod-quickpay",
+      "V002"
+     ],
+     "record_ids": [
+      "OBL-L-003"
+     ],
+     "fix_owner_id": "E004",
+     "effective_on": "2026-12-01",
+     "facts": {
+      "promise": "Customer payment data is processed and stored only within the UK or EEA, including by sub-processors.",
+      "allowed_regions": [
+       "UK",
+       "EEA"
+      ],
+      "breaches": [
+       "V002 StreamLedger Inc: customer payment data processed in US-East (United States); C-2026-031 DPA signed=True"
+      ],
+      "score_reasons": [
+       "base 90 for data_residency_breach",
+       "+10 bites in 12 days",
+       "+5 spans 3 departments"
+      ],
+      "explained_by": "llm"
+     },
+     "severity": "critical",
+     "score": 100.0,
+     "explanation": "Our customer terms promise that customer payment data is processed and stored only within the UK or EEA, including by sub-processors. However, supplier V002 StreamLedger Inc processes customer payment data in US-East (United States), which breaks that promise even though its DPA (C-2026-031) is signed. Finance, Legal and Product each own part of this, so the gap sits between teams and needs a joint decision before launch.",
+     "fix_options": [
+      "Product and Finance ask StreamLedger Inc to move processing of our customer payment data to a UK or EEA region. Legal then confirms the change under DPA C-2026-031.",
+      "Finance and Product replace StreamLedger Inc with a supplier that processes customer payment data only in the UK or EEA.",
+      "Legal revises the customer terms to disclose and permit processing in the United States by sub-processors. This only works if the business accepts changing the promise to customers."
+     ],
+     "status": "open",
+     "waiver": null,
+     "basis": [
+      "Contract: Customer Terms v2.0 clause 7.2 (UK/EEA only)",
+      "EU law: GDPR Ch. V transfers; DORA Art. 30(2)(b) processing locations"
+     ],
+     "blocks_launch": true,
+     "fix_owner": "Meera Iyer"
+    },
+    {
+     "id": "version_drift:OBL-L-001",
+     "type": "version_drift",
+     "anchor": "OBL-L-001",
+     "title": "Approval APR-2026-014 covers v1.4 but QuickPay launches v2.0 with 3 material change(s) and no change control request",
+     "departments": [
+      "Legal",
+      "Product"
+     ],
+     "nodes": [
+      "prod-quickpay",
+      "OBL-L-001",
+      "OBL-L-007"
+     ],
+     "record_ids": [
+      "OBL-L-001",
+      "OBL-L-007"
+     ],
+     "fix_owner_id": "E004",
+     "effective_on": "2026-12-01",
+     "facts": {
+      "approved_version": "1.4",
+      "launch_version": "2.0",
+      "product": "QuickPay",
+      "approval_id": "APR-2026-014",
+      "approval_valid_until": "2027-06-12",
+      "material_changes": [
+       "CHG-01 Cross-border payments to EU beneficiaries (new_feature)",
+       "CHG-02 Transaction analytics and fraud scoring via StreamLedger (new_third_party_processor)",
+       "CHG-03 Premium support tier with 24x7 support (new_service_commitment)"
+      ],
+      "change_control_filed": false,
+      "score_reasons": [
+       "base 85 for version_drift",
+       "+10 bites in 12 days",
+       "+5 affects 2 obligations"
+      ],
+      "explained_by": "llm"
+     },
+     "severity": "high",
+     "score": 100.0,
+     "explanation": "Legal's approval APR-2026-014 covers QuickPay version 1.4, but Product is launching version 2.0, which adds 3 material changes: cross-border payments to EU beneficiaries (CHG-01), transaction analytics and fraud scoring via the new third-party processor StreamLedger (CHG-02), and a 24x7 premium support tier (CHG-03). No change control request has been filed for these changes. The approval remains valid until 2027-06-12, but only for v1.4, so v2.0 is currently launching without approval.",
+     "fix_options": [
+      "Product files a change control request covering CHG-01, CHG-02 and CHG-03 so Legal can review them and amend APR-2026-014, or issue a new approval, to cover v2.0 before launch.",
+      "Delay the v2.0 launch until Legal approves v2.0. Until then, keep v1.4 live under the existing APR-2026-014 approval.",
+      "Launch only the scope already approved by disabling the three material changes (EU cross-border payments, StreamLedger analytics and fraud scoring, and the 24x7 premium support tier). Then release each one only after change control is filed and Legal approves it."
+     ],
+     "status": "open",
+     "waiver": null,
+     "basis": [
+      "Internal policy: Product Change Control Policy 2",
+      "EU law: DORA Art. 9 ICT change management"
+     ],
+     "blocks_launch": true,
+     "fix_owner": "Meera Iyer"
+    },
+    {
+     "id": "orphaned_owner:E004",
+     "type": "orphaned_owner",
+     "anchor": "E004",
+     "title": "Meera Iyer leaves on 2026-11-27 but still holds 7 role(s) needed at launch",
+     "departments": [
+      "Finance",
+      "HR",
+      "Legal",
+      "Product"
+     ],
+     "nodes": [
+      "E004",
+      "OBL-L-001",
+      "OBL-L-003",
+      "OBL-L-006",
+      "prod-quickpay",
+      "prod-quickpay",
+      "AL-E004",
+      "PO-2026-0450"
+     ],
+     "record_ids": [
+      "OBL-L-001",
+      "OBL-L-003",
+      "OBL-L-006"
+     ],
+     "fix_owner_id": null,
+     "effective_on": "2026-11-27",
+     "facts": {
+      "person": "Meera Iyer",
+      "role": "Head of Payments Product",
+      "active": true,
+      "leaving_on": "2026-11-27",
+      "launch_date": "2026-12-01",
+      "roles": [
+       "owner of OBL-L-001: Each payments product must hold a current, unexpired Legal approval.",
+       "owner of OBL-L-003: Customer payment data is processed and stored only within the UK or EE",
+       "owner of OBL-L-006: The regulator is notified at least five business days before launching",
+       "accountable senior manager on approval APR-2026-014 for QuickPay",
+       "product owner of QuickPay",
+       "sole approver for 'QuickPay product spend' (limit 250,000, no delegate)",
+       "approver of pending PO-2026-0450 (45,000, Launch monitoring and on-call tooling)"
+      ],
+      "obligations": [
+       "Each payments product must hold a current, unexpired Legal approval.",
+       "Customer payment data is processed and stored only within the UK or EEA, including by sub-processors.",
+       "The regulator is notified at least five business days before launching a new payments feature."
+      ],
+      "score_reasons": [
+       "base 60 for orphaned_owner",
+       "+10 bites in 8 days",
+       "+10 spans 4 departments",
+       "+5 affects 3 obligations"
+      ],
+      "explained_by": "llm"
+     },
+     "severity": "high",
+     "score": 85.0,
+     "explanation": "Meera Iyer, Head of Payments Product, leaves on 2026-11-27, four days before the 2026-12-01 launch, but she still holds 7 roles the launch depends on across Legal, Finance, HR and Product. These roles are: owner of three Legal obligations (OBL-L-001 Legal approval, OBL-L-003 UK/EEA data location, OBL-L-006 regulator notification at least five business days before launch); accountable senior manager on approval APR-2026-014 for QuickPay; product owner of QuickPay; sole approver for 'QuickPay product spend' (limit 250,000) with no delegate; and approver of pending PO-2026-0450 (45,000, launch monitoring and on-call tooling). Once she leaves, each of these will have no owner, and the spend approval will have no backup.",
+     "fix_options": [
+      "Before 2026-11-27, name successors and formally reassign ownership of OBL-L-001, OBL-L-003 and OBL-L-006, the product owner role for QuickPay, and the accountable senior manager role on APR-2026-014 (Legal, Product and HR to confirm the handover).",
+      "Have Finance add a delegate or replacement approver for 'QuickPay product spend' (limit 250,000), and get pending PO-2026-0450 (45,000) either approved by Meera before she leaves or reassigned to the new approver.",
+      "If successors cannot be confirmed before 2026-11-27, escalate a decision on holding the 2026-12-01 launch until every one of the 7 roles has an active owner."
+     ],
+     "status": "open",
+     "waiver": null,
+     "basis": [
+      "EU law: GDPR Art. 5(2) accountability; DORA Art. 5",
+      "Internal policy: HR 6.2 leaver handover; Finance 3.3 ASM approval"
+     ],
+     "blocks_launch": true,
+     "fix_owner": null
+    },
+    {
+     "id": "support_capacity_gap:OBL-L-005",
+     "type": "support_capacity_gap",
+     "anchor": "OBL-L-005",
+     "title": "Promised 336 staffed hours/week but staffing covers 240; Support hiring frozen until 2027-03-31",
+     "departments": [
+      "Finance",
+      "HR",
+      "Legal"
+     ],
+     "nodes": [
+      "OBL-L-005",
+      "prod-quickpay",
+      "B-001",
+      "dept:Support",
+      "E019",
+      "E020",
+      "E021",
+      "E022",
+      "E023",
+      "E024"
+     ],
+     "record_ids": [
+      "OBL-L-005"
+     ],
+     "fix_owner_id": "E007",
+     "effective_on": "2026-12-01",
+     "facts": {
+      "promise": "Premium customers receive 24x7 support, with at least two agents staffed at all times and a first response within 15 minutes for payment failures.",
+      "required_hours_per_week": 336.0,
+      "staffed_hours_per_week": 240.0,
+      "gap_hours": 96.0,
+      "agents": 6,
+      "budget_coverage": [
+       "B-001 Support staff (6 FTE): Business hours Mon-Fri 08:00-18:00; no out-of-hours line"
+      ],
+      "hiring_frozen_until": "2027-03-31",
+      "score_reasons": [
+       "base 70 for support_capacity_gap",
+       "+10 bites in 12 days",
+       "+5 spans 3 departments"
+      ],
+      "explained_by": "llm"
+     },
+     "severity": "high",
+     "score": 85.0,
+     "explanation": "The promise to Premium customers requires 336 staffed agent-hours per week (24x7 support, at least two agents at all times, and a 15-minute first response for payment failures), but the 6 budgeted support staff provide only 240 hours, leaving a 96-hour weekly gap. The budget line (B-001) covers only business hours, Mon-Fri 08:00-18:00, with no out-of-hours line, so nights and weekends have no coverage at all. HR cannot close the gap by hiring because Support hiring is frozen until 2027-03-31.",
+     "fix_options": [
+      "Legal revises the Premium promise to match funded coverage (business hours Mon-Fri 08:00-18:00) and removes or rescopes the 24x7, two-agent, and 15-minute payment-failure commitments before launch.",
+      "Finance funds an out-of-hours support line, and HR seeks an exception to the hiring freeze, to cover the 96-hour weekly gap, including nights and weekends.",
+      "Delay the 24x7 Premium commitment until Support hiring reopens after 2027-03-31, and launch now with only the support terms the current 6-agent staffing can meet."
+     ],
+     "status": "open",
+     "waiver": null,
+     "basis": [
+      "Contract: Customer Terms v2.0 clause 9.1 (24x7, two agents)",
+      "EU law: Working Time Directive 2003/88/EC"
+     ],
+     "blocks_launch": true,
+     "fix_owner": "Liam O'Connor"
+    },
+    {
+     "id": "seller_training_gap:OBL-L-002",
+     "type": "seller_training_gap",
+     "anchor": "OBL-L-002",
+     "title": "2 seller(s) will not hold valid PCT-101 on their first sales date",
+     "departments": [
+      "HR",
+      "Legal"
+     ],
+     "nodes": [
+      "OBL-L-002",
+      "prod-quickpay",
+      "E013",
+      "E015"
+     ],
+     "record_ids": [
+      "OBL-L-002"
+     ],
+     "fix_owner_id": "E006",
+     "effective_on": "2026-12-01",
+     "facts": {
+      "course": "PCT-101",
+      "requirement": "Only employees holding valid Payments Conduct Training (PCT-101, 12 months) may sell or onboard customers to a payments product.",
+      "sellers_without_valid_training": [
+       "E013 Ben Foster: PCT-101 expires 2026-11-25, first sale 2026-12-01",
+       "E015 Dmitri Volkov: PCT-101 not started, first sale 2026-12-01"
+      ],
+      "hr_mandatory_list_includes_course": false,
+      "score_reasons": [
+       "base 60 for seller_training_gap",
+       "+10 bites in 12 days"
+      ],
+      "explained_by": "llm"
+     },
+     "severity": "high",
+     "score": 70.0,
+     "explanation": "Legal requires that only employees holding valid Payments Conduct Training (PCT-101, valid for 12 months) may sell or onboard customers to a payments product, but HR's mandatory training list does not include PCT-101. As a result, 2 sellers scheduled to start selling on 2026-12-01 will not meet the requirement. Ben Foster (E013) has a PCT-101 that expires on 2026-11-25, and Dmitri Volkov (E015) has not started PCT-101.",
+     "fix_options": [
+      "Have Ben Foster (E013) renew PCT-101 and Dmitri Volkov (E015) complete PCT-101 before their first sales date of 2026-12-01.",
+      "Move the first sales date for E013 and E015, or temporarily reassign their payments-product selling and onboarding, until each holds a valid PCT-101.",
+      "Have HR add PCT-101 to its mandatory training list so that this Legal requirement is tracked for all sellers of payments products."
+     ],
+     "status": "open",
+     "waiver": null,
+     "basis": [
+      "Internal policy: Conduct Policy 5.3 (PCT-101 on date of sale)",
+      "EU law: GDPR Art. 39(1)(b) staff training"
+     ],
+     "blocks_launch": false,
+     "fix_owner": "Neha Kapoor"
+    }
+   ],
+   "drafts": [
+    {
+     "id": "notify_owner:data_residency_breach:OBL-L-003",
+     "action": "notify_owner",
+     "seam_id": "data_residency_breach:OBL-L-003",
+     "summary": "Notify Helena Brandt (Chief Operating Officer): 1 supplier(s) process customer data outside UK/EEA, against the customer terms (owner Meera Iyer leaves 2026-11-27; routed to their manager)",
+     "params": {
+      "to": "E001",
+      "message": "Our customer terms promise that customer payment data is processed and stored only within the UK or EEA, including by sub-processors. However, supplier V002 StreamLedger Inc processes customer payment data in US-East (United States), which breaks that promise even though its DPA (C-2026-031) is signed. Finance, Legal and Product each own part of this, so the gap sits between teams and needs a joint decision before launch."
+     },
+     "status": "pending",
+     "created_at": "2026-11-18T08:12:16+00:00",
+     "decision": null
+    },
+    {
+     "id": "notify_owner:version_drift:OBL-L-001",
+     "action": "notify_owner",
+     "seam_id": "version_drift:OBL-L-001",
+     "summary": "Notify Helena Brandt (Chief Operating Officer): Approval APR-2026-014 covers v1.4 but QuickPay launches v2.0 with 3 material change(s) and no change control request (owner Meera Iyer leaves 2026-11-27; routed to their manager)",
+     "params": {
+      "to": "E001",
+      "message": "Legal's approval APR-2026-014 covers QuickPay version 1.4, but Product is launching version 2.0, which adds 3 material changes: cross-border payments to EU beneficiaries (CHG-01), transaction analytics and fraud scoring via the new third-party processor StreamLedger (CHG-02), and a 24x7 premium support tier (CHG-03). No change control request has been filed for these changes. The approval remains valid until 2027-06-12, but only for v1.4, so v2.0 is currently launching without approval."
+     },
+     "status": "pending",
+     "created_at": "2026-11-18T08:12:16+00:00",
+     "decision": null
+    },
+    {
+     "id": "reassign_owner:orphaned_owner:E004",
+     "action": "reassign_owner",
+     "seam_id": "orphaned_owner:E004",
+     "summary": "Reassign 3 obligation(s) from Meera Iyer to a successor (approver names the successor)",
+     "params": {
+      "record_ids": [
+       "OBL-L-001",
+       "OBL-L-003",
+       "OBL-L-006"
+      ],
+      "owner_id": null
+     },
+     "status": "pending",
+     "created_at": "2026-11-18T08:12:16+00:00",
+     "decision": null
+    },
+    {
+     "id": "notify_owner:support_capacity_gap:OBL-L-005",
+     "action": "notify_owner",
+     "seam_id": "support_capacity_gap:OBL-L-005",
+     "summary": "Notify Liam O'Connor (Head of Customer Support): Promised 336 staffed hours/week but staffing covers 240; Support hiring frozen until 2027-03-31",
+     "params": {
+      "to": "E007",
+      "message": "The promise to Premium customers requires 336 staffed agent-hours per week (24x7 support, at least two agents at all times, and a 15-minute first response for payment failures), but the 6 budgeted support staff provide only 240 hours, leaving a 96-hour weekly gap. The budget line (B-001) covers only business hours, Mon-Fri 08:00-18:00, with no out-of-hours line, so nights and weekends have no coverage at all. HR cannot close the gap by hiring because Support hiring is frozen until 2027-03-31."
+     },
+     "status": "pending",
+     "created_at": "2026-11-18T08:12:16+00:00",
+     "decision": null
+    },
+    {
+     "id": "notify_owner:seller_training_gap:OBL-L-002",
+     "action": "notify_owner",
+     "seam_id": "seller_training_gap:OBL-L-002",
+     "summary": "Notify Neha Kapoor (Head of SME Sales): 3 seller(s) will not hold valid PCT-101 on their first sales date",
+     "params": {
+      "to": "E006",
+      "message": "Legal requires that only employees holding valid Payments Conduct Training (PCT-101, valid for 12 months) may sell or onboard customers to a payments product, but HR's mandatory training list does not include PCT-101. As a result, 3 sellers scheduled to make their first sales on 2026-12-01 will not be compliant: Ben Foster's (E013) PCT-101 expires on 2026-11-25, and Chloe Dubois (E014) and Dmitri Volkov (E015) have not started the course."
+     },
+     "status": "pending",
+     "created_at": "2026-11-18T08:12:16+00:00",
+     "decision": null
+    }
+   ],
+   "people": [
+    {
+     "id": "E001",
+     "name": "Helena Brandt",
+     "role": "Chief Operating Officer"
+    },
+    {
+     "id": "E002",
+     "name": "Arjun Rao",
+     "role": "Head of Finance"
+    },
+    {
+     "id": "E003",
+     "name": "Sofia Marchetti",
+     "role": "General Counsel"
+    },
+    {
+     "id": "E004",
+     "name": "Meera Iyer",
+     "role": "Head of Payments Product"
+    },
+    {
+     "id": "E005",
+     "name": "Tom Alder",
+     "role": "Head of HR"
+    },
+    {
+     "id": "E006",
+     "name": "Neha Kapoor",
+     "role": "Head of SME Sales"
+    },
+    {
+     "id": "E007",
+     "name": "Liam O'Connor",
+     "role": "Head of Customer Support"
+    },
+    {
+     "id": "E008",
+     "name": "Yusuf Demir",
+     "role": "Procurement Manager"
+    },
+    {
+     "id": "E009",
+     "name": "Grace Kim",
+     "role": "Legal Counsel"
+    },
+    {
+     "id": "E010",
+     "name": "Priya Sharma",
+     "role": "Engineering Lead"
+    },
+    {
+     "id": "E011",
+     "name": "Carlos Mendes",
+     "role": "Sales Executive"
+    },
+    {
+     "id": "E012",
+     "name": "Aisha Khan",
+     "role": "Sales Executive"
+    },
+    {
+     "id": "E013",
+     "name": "Ben Foster",
+     "role": "Sales Executive"
+    },
+    {
+     "id": "E014",
+     "name": "Chloe Dubois",
+     "role": "Sales Executive"
+    },
+    {
+     "id": "E015",
+     "name": "Dmitri Volkov",
+     "role": "Sales Executive"
+    },
+    {
+     "id": "E016",
+     "name": "Eva Lindqvist",
+     "role": "Sales Executive"
+    },
+    {
+     "id": "E017",
+     "name": "Farid Hassan",
+     "role": "Sales Executive"
+    },
+    {
+     "id": "E018",
+     "name": "Hannah Weiss",
+     "role": "Sales Executive"
+    },
+    {
+     "id": "E019",
+     "name": "Isabel Torres",
+     "role": "Support Agent"
+    },
+    {
+     "id": "E020",
+     "name": "Jamal Brooks",
+     "role": "Support Agent"
+    },
+    {
+     "id": "E021",
+     "name": "Kavya Menon",
+     "role": "Support Agent"
+    },
+    {
+     "id": "E022",
+     "name": "Lucas Meyer",
+     "role": "Support Agent"
+    },
+    {
+     "id": "E023",
+     "name": "Mina Park",
+     "role": "Support Agent"
+    },
+    {
+     "id": "E024",
+     "name": "Noah Fischer",
+     "role": "Support Agent"
+    },
+    {
+     "id": "E025",
+     "name": "Olivia Grant",
+     "role": "HR Business Partner"
+    },
+    {
+     "id": "E026",
+     "name": "Pavel Novak",
+     "role": "Finance Analyst"
+    },
+    {
+     "id": "E027",
+     "name": "Quentin Hale",
+     "role": "Marketing Manager"
+    }
+   ],
+   "events": [
+    {
+     "event_id": "EV-01",
+     "date": "2026-11-19",
+     "description": "Chloe Dubois (E014) completes Payments Conduct Training (PCT-101).",
+     "applied": true
+    },
+    {
+     "event_id": "EV-02",
+     "date": "2026-11-20",
+     "description": "Regulator notification for the v2.0 launch is filed and the copy is stored.",
+     "applied": false
+    },
+    {
+     "event_id": "EV-03",
+     "date": "2026-11-23",
+     "description": "New identity-verification supplier VerifyPoint Inc (US) is onboarded and added to the QuickPay data flows. Finance and Legal paperwork is complete.",
+     "applied": false
+    },
+    {
+     "event_id": "EV-04",
+     "date": "2026-11-25",
+     "description": "Legal names Priya Sharma (E010) as the new accountable senior manager and reassigns E004's obligations. HR updates the staffing sheet. Finance's approval table is not updated.",
+     "applied": false
+    },
+    {
+     "event_id": "EV-05",
+     "date": "2026-11-27",
+     "description": "Meera Iyer (E004) works her last day. The pending monitoring purchase order is still routed to her.",
+     "applied": false
+    },
+    {
+     "event_id": "EV-06",
+     "date": "2026-11-30",
+     "description": "Finance adds Priya Sharma (E010) to the approval table and reroutes the pending purchase order to her.",
+     "applied": false
+    }
+   ],
+   "scenarios": [
+    {
+     "name": "decoy_turns_real",
+     "event_id": "WHATIF-decoy",
+     "description": "Harbor Analytics (US) is wired into QuickPay to analyse customer payment data.",
+     "applied": false
+    },
+    {
+     "name": "fix_change_control",
+     "event_id": "WHATIF-change-control",
+     "description": "Product files change control; Legal re-approves QuickPay for v2.0.",
+     "applied": false
+    },
+    {
+     "name": "fix_data_residency",
+     "event_id": "WHATIF-residency",
+     "description": "StreamLedger moves QuickPay processing to its Frankfurt region.",
+     "applied": false
+    },
+    {
+     "name": "fix_seller_training",
+     "event_id": "WHATIF-seller-training",
+     "description": "Chloe Dubois, Ben Foster and Dmitri Volkov complete PCT-101.",
+     "applied": false
+    },
+    {
+     "name": "fix_support_capacity",
+     "event_id": "WHATIF-support",
+     "description": "COO and Head of Finance approve a freeze exception; three support agents join QuickPay.",
+     "applied": false
+    },
+    {
+     "name": "general_counsel_resigns",
+     "event_id": "WHATIF-gc-resigns",
+     "description": "General Counsel Sofia Marchetti (E003) resigns; last working day 2026-11-28.",
+     "applied": false
+    },
+    {
+     "name": "new_seller_untrained",
+     "event_id": "WHATIF-new-seller",
+     "description": "A new sales executive joins QuickPay sales from launch day without PCT-101.",
+     "applied": false
+    }
+   ],
+   "signoff": {
+    "state": "pending"
+   },
+   "evidence_expiring": [
+    {
+     "what": "Ben Foster: PCT-101",
+     "expires_on": "2026-11-25"
+    },
+    {
+     "what": "C-2025-020 Harbor Analytics Inc: Subscription",
+     "expires_on": "2026-12-31"
+    },
+    {
+     "what": "C-2026-012 BrightMark Agency Ltd: Services agreement",
+     "expires_on": "2026-12-31"
+    },
+    {
+     "what": "Helena Brandt: COC-100",
+     "expires_on": "2027-01-12"
+    },
+    {
+     "what": "Arjun Rao: COC-100",
+     "expires_on": "2027-01-21"
+    },
+    {
+     "what": "Sofia Marchetti: COC-100",
+     "expires_on": "2027-01-30"
+    },
+    {
+     "what": "C-2026-007 LexAdvisory LLP: Engagement letter",
+     "expires_on": "2027-01-31"
+    },
+    {
+     "what": "Meera Iyer: COC-100",
+     "expires_on": "2027-02-08"
+    },
+    {
+     "what": "Helena Brandt: DPA-110",
+     "expires_on": "2027-02-09"
+    },
+    {
+     "what": "Tom Alder: COC-100",
+     "expires_on": "2027-02-17"
+    },
+    {
+     "what": "Arjun Rao: DPA-110",
+     "expires_on": "2027-02-18"
+    },
+    {
+     "what": "Farid Hassan: PCT-101",
+     "expires_on": "2027-02-18"
+    },
+    {
+     "what": "Neha Kapoor: COC-100",
+     "expires_on": "2027-02-26"
+    },
+    {
+     "what": "Sofia Marchetti: DPA-110",
+     "expires_on": "2027-02-27"
+    },
+    {
+     "what": "C-2025-011 EuroCloud Hosting GmbH: Master services agreement",
+     "expires_on": "2027-02-28"
+    },
+    {
+     "what": "Liam O'Connor: COC-100",
+     "expires_on": "2027-03-07"
+    },
+    {
+     "what": "Meera Iyer: DPA-110",
+     "expires_on": "2027-03-08"
+    },
+    {
+     "what": "Carlos Mendes: PCT-101",
+     "expires_on": "2027-03-10"
+    },
+    {
+     "what": "Yusuf Demir: COC-100",
+     "expires_on": "2027-03-16"
+    },
+    {
+     "what": "Tom Alder: DPA-110",
+     "expires_on": "2027-03-17"
+    }
+   ],
+   "policy_versions": {
+    "rules": "rules-2026.11.18-b",
+    "tiers": "tiers-2026.11.18-b"
+   },
+   "extraction": {
+    "records_by_department": {
+     "Finance": 4,
+     "HR": 5,
+     "Legal": 10
+    },
+    "quote_check": {
+     "checked": 19,
+     "failed": []
+    }
+   },
+   "last_verified": "2026-11-18T08:12:16+00:00",
+   "audit": {
+    "ok": true,
+    "entries": 1,
+    "broken_at": null,
+    "head": "b8fc1cb89a59d1ba2189d8fe8913b345f8b0883e0ddb2b33f23066777ffc056f"
+   },
+   "disclaimer": "Evidence-backed review on synthetic data, not a compliance certificate."
+  },
+  "diff": {
+   "event": {
+    "id": "EV-01",
+    "date": "2026-11-19",
+    "description": "Chloe Dubois (E014) completes Payments Conduct Training (PCT-101).",
+    "files": [
+     "hr/training_records.csv"
+    ]
+   },
+   "cause": null,
+   "rechecked_nodes": [
+    "B-001",
+    "B-002",
+    "B-003",
+    "B-004",
+    "B-005",
+    "B-006",
+    "B-007",
+    "B-010",
+    "E004",
+    "E006",
+    "E007",
+    "E010",
+    "E011",
+    "E012",
+    "E013",
+    "E014",
+    "E015",
+    "E016",
+    "E017",
+    "E018",
+    "E019",
+    "E020",
+    "E021",
+    "E022",
+    "E023",
+    "E024",
+    "OBL-L-001",
+    "OBL-L-002",
+    "OBL-L-003",
+    "OBL-L-005",
+    "OBL-L-006",
+    "OBL-L-007",
+    "OBL-L-009",
+    "PO-2026-0398",
+    "PO-2026-0405",
+    "PO-2026-0412",
+    "PO-2026-0420",
+    "PO-2026-0450",
+    "V001",
+    "V002",
+    "V004",
+    "prod-quickpay"
+   ],
+   "selective_matches_full": true,
+   "opened": [],
+   "closed": [],
+   "changed": [
+    "seller_training_gap:OBL-L-002"
+   ],
+   "status_before": "no_go",
+   "status_after": "no_go",
+   "invalidated_signoff": null,
+   "departments_before": {
+    "Finance": "conditional",
+    "HR": "conditional",
+    "Legal": "conditional",
+    "Product": "go"
+   },
+   "departments_after": {
+    "Finance": "conditional",
+    "HR": "conditional",
+    "Legal": "conditional",
+    "Product": "go"
+   }
+  }
+ }
+]

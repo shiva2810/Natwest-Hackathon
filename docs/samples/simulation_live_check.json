@@ -1,0 +1,81 @@
+{
+ "event": {
+  "event_id": "LIVE",
+  "date": "2026-11-19",
+  "description": "Live edit: finance/vendors.csv {'vendor_id': 'V002'} data_processing_region -> EU-Frankfurt",
+  "changes": [
+   {
+    "file": "finance/vendors.csv",
+    "op": "update",
+    "match": {
+     "vendor_id": "V002"
+    },
+    "set": {
+     "data_processing_region": "EU-Frankfurt"
+    }
+   }
+  ]
+ },
+ "preview": [
+  {
+   "file": "finance/vendors.csv",
+   "op": "update",
+   "target": "V002",
+   "field": "data_processing_region",
+   "before": "US-East",
+   "after": "EU-Frankfurt"
+  }
+ ],
+ "opened": [],
+ "closed": [
+  "data_residency_breach:OBL-L-003"
+ ],
+ "changed": [],
+ "status_before": "no_go",
+ "status_after": "no_go",
+ "departments": {
+  "Finance": {
+   "before": "no_go",
+   "after": "no_go"
+  },
+  "HR": {
+   "before": "no_go",
+   "after": "no_go"
+  },
+  "Legal": {
+   "before": "no_go",
+   "after": "no_go"
+  },
+  "Product": {
+   "before": "no_go",
+   "after": "no_go"
+  }
+ },
+ "seams_after": [
+  {
+   "id": "version_drift:OBL-L-001",
+   "title": "Approval APR-2026-014 covers v1.4 but QuickPay launches v2.0 with 3 material change(s) and no change control request",
+   "severity": "high",
+   "status": "open"
+  },
+  {
+   "id": "orphaned_owner:E004",
+   "title": "Meera Iyer leaves on 2026-11-27 but still holds 7 role(s) needed at launch",
+   "severity": "high",
+   "status": "open"
+  },
+  {
+   "id": "support_capacity_gap:OBL-L-005",
+   "title": "Promised 336 staffed hours/week but staffing covers 240; Support hiring frozen until 2027-03-31",
+   "severity": "high",
+   "status": "open"
+  },
+  {
+   "id": "seller_training_gap:OBL-L-002",
+   "title": "2 seller(s) will not hold valid PCT-101 on their first sales date",
+   "severity": "high",
+   "status": "open"
+  }
+ ],
+ "signoff_would_reset": false
+}
