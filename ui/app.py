@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import streamlit as st
 
 from seam.client import SeamClient, SeamError
+from ui.audit_chat import render as audit_chat
 from ui.live_check import render as live_check
 
 st.set_page_config(page_title="Compliance passport", layout="wide")
@@ -36,6 +37,9 @@ p = c.passport()
 st.title(f"{p['product']['name']} v{p['product']['version']} · launch {p['product']['launch_date']}")
 st.caption(f"{p['company']} · as of {p['as_of']} · last verified {p['last_verified']} · rules "
            f"{p['policy_versions']['rules']} · backend: {c.mode} · {p['disclaimer']}")
+audit_chat(c)
+st.divider()
+
 left, right = st.columns([3, 1])
 left.header(ICON[p["overall"]])
 right.metric("Sign-off", p["signoff"]["state"].upper(), p["signoff"].get("by") or p["signoff"].get("reason", ""),

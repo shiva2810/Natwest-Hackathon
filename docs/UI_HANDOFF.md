@@ -21,6 +21,13 @@ p = c.passport()
 
 ## Screens to build (in priority order)
 
+### 0. Audit chat: the entry point (ready, mount it first)
+`from ui.audit_chat import render; render(c)`. The auditor asks a question; it routes (Claude, else
+keywords) to a scoped audit of HR / Finance / Legal in any combination, or to a what-if. If it is not
+understood, preset buttons run a predefined audit. API: `POST /audit/ask {question}` ->
+`{route: {intent, domains, via}, audit | simulation}`; `GET /audit/scope?domains=HR,Legal` for presets.
+Seams needing a department outside the scope are listed under `seams_needing_other_domains`, never dropped.
+
 ### 1. Passport header (6.1): never cut
 | Show | From `passport` |
 |---|---|

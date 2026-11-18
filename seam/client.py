@@ -52,7 +52,8 @@ class SeamClient:
 
     def _local_call(self, method: str, path: str, body: dict | None) -> Any:
         from fastapi import HTTPException
-        from .api import DraftDecision, Event, FileEvent, LiveApply, LiveEvent, LiveField, LiveQuestion, SignOff
+        from .api import (AuditQuestion, DraftDecision, Event, FileEvent, LiveApply, LiveEvent, LiveField,
+                          LiveQuestion, SignOff)
         a = self._engine()
         parts = path.strip("/").split("/")
         try:
@@ -68,6 +69,10 @@ class SeamClient:
                 return a.stream()
             if parts[:2] == ["events", "stream"]:
                 return a.stream_event(parts[2])
+            if path == "/audit/ask":
+                return a.audit_ask(AuditQuestion(**body))
+            if path.startswith("/audit/scope"):
+                return a.audit_scope(path.split("domains=", 1)[1] if "domains=" in path else "HR,Finance,Legal")
             if path == "/live/editable":
                 return a.live_editable()
             if path == "/live/field":
@@ -129,6 +134,15 @@ class SeamClient:
         """Ad-hoc what-if in the event-stream file-change format."""
         return self._call("POST", "/events/custom", {"event_id": event_id, "description": description,
                                                       "date": date, "changes": changes})
+
+    # ---------- question-driven audit ----------
+
+    def ask(self, question: str) -> dict:
+        """Route a question: scoped audit (any mix of HR/Finance/Legal) or a what-if simulation."""
+        return self._call("POST", "/audit/ask", {"question": question})
+
+    def audit_scope(self, domains: list[str]) -> dict:
+        return self._call("GET", f"/audit/scope?domains={','.join(domains)}")
 
     # ---------- live what-if checks ----------
 

@@ -16,6 +16,8 @@ Endpoints (the Person 2 <-> Person 3 contract):
   POST /scenarios/{name}            apply one -> {"diff", "passport"}
   POST /events/custom               apply an ad-hoc event in the stream's file-change format
   POST /events                      typed event (fixtures mode only)
+  POST /audit/ask                   {"question"} -> routed to a scoped audit (HR/Finance/Legal, any mix) or a what-if
+  GET  /audit/scope?domains=HR,Legal  scoped audit without a question (preset buttons)
   GET  /live/editable               tables/rows/columns and doc fields the form editor can change
   POST /live/field                  {"file", "key": {...}, "field", "value"} -> simulation (nothing applied)
   POST /live/propose                {"question"} -> Claude drafts the change -> simulation (nothing applied)
@@ -156,6 +158,23 @@ class LiveApply(BaseModel):
     event: dict[str, Any]
     confirmed_by: str
     reason: str = ""
+
+
+class AuditQuestion(BaseModel):
+    question: str
+
+
+@app.post("/audit/ask")
+def audit_ask(body: AuditQuestion):
+    from .audit import ask
+    return _guard(lambda: ask(engine, body.question))
+
+
+@app.get("/audit/scope")
+def audit_scope(domains: str = "HR,Finance,Legal"):
+    from .audit import scoped
+    with lock:
+        return scoped(engine.passport(), [d.strip() for d in domains.split(",")])
 
 
 @app.get("/live/editable")

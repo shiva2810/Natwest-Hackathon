@@ -1,0 +1,103 @@
+"""Question-driven audit: route a question to a scope (HR / Finance / Legal, any combination) or a what-if.
+
+Routing: Claude first (if configured), then keywords, then a preset menu. Scoping never recomputes or
+hides anything silently: a seam that needs a department outside the scope is listed as out of scope
+with the departments it needs. Product is shared context and is always available.
+"""
+from __future__ import annotations
+
+import re
+from typing import Any, Callable
+
+from .llm import OfflineMiss, parse_json
+
+DOMAINS = ("HR", "Finance", "Legal")
+PRESETS = [
+    {"label": "Full launch audit (HR + Finance + Legal)", "domains": list(DOMAINS)},
+    {"label": "HR only", "domains": ["HR"]},
+    {"label": "Finance only", "domains": ["Finance"]},
+    {"label": "Legal only", "domains": ["Legal"]},
+]
+KEYWORDS = {
+    "HR": r"\b(hr|people|staff|employee|training|roster|headcount|hiring|leaver|resign|seller|course)\w*",
+    "Finance": r"\b(finance|financial|budget|spend|vendor|supplier|purchase|po|approval limit|approver|cost)\w*",
+    "Legal": r"\b(legal|contract|dpa|terms|obligation|regulator|approval|gdpr|policy|residency|change control)\w*",
+}
+ALL_WORDS = r"\b(all|every|full|overall|whole|launch|ready|readiness|passport|go|no-go|everything|audit)\b"
+WHATIF = r"^\s*(what if|what happens if|suppose|if )"
+
+PROMPT = """Route an auditor's question for a compliance tool covering three departments: HR, Finance, Legal.
+Return ONLY JSON: {{"intent": "audit" | "what_if" | "unclear", "domains": [subset of "HR","Finance","Legal"]}}
+- "audit": the question asks whether something is compliant / ready / failing. Pick the departments it
+  concerns; a launch-readiness or general question means all three.
+- "what_if": the question describes a hypothetical change to people, suppliers, contracts, approvals, etc.
+- "unclear": not about compliance.
+Question: {question}"""
+
+
+def route(question: str, llm: Callable[[str], str] | None = None) -> dict[str, Any]:
+    q = question.strip()
+    if not q:
+        return {"intent": "unclear", "domains": [], "via": "empty"}
+    if llm is not None:
+        try:
+            out = parse_json(llm(PROMPT.format(question=q)))
+            intent = out.get("intent")
+            domains = [d for d in out.get("domains", []) if d in DOMAINS]
+            if intent == "what_if" or (intent == "audit" and domains):
+                return {"intent": intent, "domains": domains or list(DOMAINS), "via": "llm"}
+            if intent == "unclear":
+                return {"intent": "unclear", "domains": [], "via": "llm"}
+        except (OfflineMiss, ValueError, AttributeError, TypeError):
+            pass
+        except Exception:  # provider error: fall through to keywords
+            pass
+    low = q.lower()
+    if re.search(WHATIF, low):
+        return {"intent": "what_if", "domains": list(DOMAINS), "via": "keywords"}
+    hits = [d for d, rx in KEYWORDS.items() if re.search(rx, low)]
+    if hits:
+        return {"intent": "audit", "domains": hits, "via": "keywords"}
+    if re.search(ALL_WORDS, low):
+        return {"intent": "audit", "domains": list(DOMAINS), "via": "keywords"}
+    return {"intent": "unclear", "domains": [], "via": "keywords"}
+
+
+def scoped(passport: dict[str, Any], domains: list[str]) -> dict[str, Any]:
+    """Cut a passport down to the selected departments. Pure: reads the passport, changes nothing."""
+    sel = [d for d in DOMAINS if d in domains] or list(DOMAINS)
+    available = set(sel) | {"Product"}
+    in_scope, out_scope = [], []
+    for s in passport["seams"]:
+        need = sorted(set(s["departments"]) - available)
+        if not need:
+            in_scope.append(s)
+        elif set(s["departments"]) & set(sel):
+            out_scope.append({"id": s["id"], "title": s["title"], "needs": need})
+    depts = {d: passport["departments"][d] for d in sel if d in passport["departments"]}
+    totals = {k: sum(d.get("results", {}).get(k, 0) for d in depts.values()) for k in ("passed", "failed", "needs_review")}
+    blocking = [s["id"] for s in in_scope if s["status"] == "open" and (s["blocks_launch"] or s["severity"] == "critical")]
+    open_in = [s for s in in_scope if s["status"] == "open"]
+    status = "no_go" if blocking else "conditional" if (open_in or totals["failed"] or totals["needs_review"]) else "go"
+    return {
+        "domains": sel, "status": status, "totals": totals, "departments": depts,
+        "seams": in_scope, "seams_needing_other_domains": out_scope,
+        "as_of": passport["as_of"], "product": passport["product"], "full_overall": passport["overall"],
+        "note": None if len(sel) == 3 else
+        "Single- or partial-domain review: cross-department seams needing unselected domains are listed, not evaluated.",
+    }
+
+
+def ask(engine, question: str) -> dict[str, Any]:
+    """Answer an audit question: route it, then run the scoped audit or the what-if."""
+    r = route(question, engine.llm)
+    out: dict[str, Any] = {"question": question, "route": r, "presets": PRESETS}
+    if r["intent"] == "audit":
+        out["audit"] = scoped(engine.passport(), r["domains"])
+    elif r["intent"] == "what_if":
+        try:
+            out["simulation"] = engine.propose_what_if(question)
+        except Exception as exc:
+            out["route"] = {**r, "fallback": f"what-if could not be drafted: {exc}"}
+    engine._log("audit_question", "auditor", {"question": question, "route": out["route"]})
+    return out
