@@ -49,3 +49,57 @@ def test_sources_over_http(tmp_path, monkeypatch):
     assert client.get("/sources").json()["departments"][0]["name"] == "HR"
     assert client.get("/sources/content", params={"path": "hr/roster.csv"}).json()["total"] == 28
     assert client.get("/sources/content", params={"path": "../x"}).status_code == 409
+    import base64
+    up = {"dept": "legal", "name": "memo.md", "content_b64": base64.b64encode(b"Counsel memo").decode()}
+    assert client.post("/sources/upload", json=up).json()["file"] == "legal/memo.md"
+    assert client.post("/sources/upload", json={**up, "name": "memo.exe"}).status_code == 422
+    assert client.get("/sources/content", params={"path": "legal/memo.md"}).json()["text"] == "Counsel memo"
+
+
+# ---------- files added through the UI ----------
+
+def test_add_upload_lists_previews_and_is_searchable(eng):
+    before = eng.passport()["overall"]
+    out = eng.add_upload("hr", "visa_notes.md", b"# Visa notes\n\nPriya Nair needs a Zephyrine work permit renewal.", "tester")
+    assert out["file"] == "hr/visa_notes.md" and out["kind"] == "document"
+    hr = next(d for d in eng.sources()["departments"] if d["key"] == "hr")
+    added = next(f for f in hr["files"] if f["name"] == "visa_notes.md")
+    assert added["uploaded"] is True
+    assert "Zephyrine" in eng.source_content("hr/visa_notes.md")["text"]
+    from seam.qa import build_corpus
+    assert any("Zephyrine" in c["text"] and c["source"].startswith("hr/visa_notes.md") for c in build_corpus(eng))
+    assert eng.passport()["overall"] == before                      # reference material: the checks are untouched
+
+
+def test_add_upload_csv_json_and_persistence(eng, tmp_path):
+    eng.add_upload("finance", "extra.csv", b"id,amount\nA1,10\nA2,20\n")
+    eng.add_upload("legal", "meta.json", b'{"a": 1, "b": 2}')
+    assert eng.source_content("finance/extra.csv")["total"] == 2
+    assert eng.source_content("legal/meta.json")["json"] == {"a": 1, "b": 2}
+    again = Engine.open(ROOT / "data", tmp_path / "a.jsonl", tmp_path / "s.json")      # resumes the saved state
+    assert "finance/extra.csv" in again.dataset.uploads
+    again.run()                                                                         # reset starts fresh
+    assert not again.dataset.uploads
+
+
+@pytest.mark.parametrize("dept,name,data", [
+    ("hr", "roster.csv", b"a,b\n1,2\n"),            # would replace a file the checks read
+    ("hr", "x.exe", b"hello"),                      # wrong type
+    ("nope", "x.md", b"hello"),                     # unknown department
+    ("hr", "x.json", b"{bad"),                      # invalid JSON
+    ("hr", "x.csv", b"only,header\n"),              # no rows
+    ("hr", "x.md", b"   "),                         # empty
+    ("hr", "x.md", b"\xff\xfe\x00bad"),             # not UTF-8
+])
+def test_add_upload_rejects_bad_files(eng, dept, name, data):
+    with pytest.raises(ValueError):
+        eng.add_upload(dept, name, data)
+
+
+def test_add_upload_strips_path_components(eng):
+    assert eng.add_upload("hr", r"..\..\evil.md", b"hello there")["file"] == "hr/evil.md"
+
+
+def test_add_upload_rejects_oversized_file(eng):
+    with pytest.raises(ValueError, match="larger than"):
+        eng.add_upload("hr", "big.md", b"a" * (Engine.UPLOAD_MAX + 1))

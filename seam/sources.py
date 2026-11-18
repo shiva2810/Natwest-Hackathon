@@ -27,6 +27,9 @@ class Dataset:
     events: list[dict[str, Any]] = field(default_factory=list)
     as_of: str = "2026-11-18"
     applied: list[str] = field(default_factory=list)                        # event ids replayed so far
+    # Files added by a person through the UI: "hr/notes.md" -> {"kind", "dept", "text" | "rows" | "json", "by", "at"}.
+    # Reference material only: searchable in Q&A and viewable in the data panel, never read by the checks.
+    uploads: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     def copy(self) -> "Dataset":
         return copy.deepcopy(self)

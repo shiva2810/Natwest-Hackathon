@@ -11,10 +11,12 @@ If the source changes on disk, saved state is discarded and a fresh run happens.
 """
 from __future__ import annotations
 
+import csv
 import hashlib
+import io
 import json
 from datetime import timedelta
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Any, Callable, Literal
 
 from .governance import ROOT, AuditLog, GovernanceError, SignOff, TierPolicy, now
@@ -40,6 +42,15 @@ def source_sha(path: Path) -> str:
         h.update(str(f.relative_to(path) if path.is_dir() else f.name).encode())
         h.update(f.read_bytes())
     return h.hexdigest()
+
+
+def _upload_size(up: dict[str, Any]) -> tuple[int, str]:
+    if up["kind"] == "table":
+        return len(up["rows"]), "rows"
+    if up["kind"] == "document":
+        return len([p for p in up["text"].split("\n\n") if p.strip()]), "paragraphs"
+    j = up["json"]
+    return (len(j) if hasattr(j, "__len__") else 1), "fields"
 
 
 class Engine:
@@ -95,6 +106,7 @@ class Engine:
             d = s["dataset"]
             self.dataset.tables, self.dataset.docs = d["tables"], d["docs"]
             self.dataset.as_of, self.dataset.applied = d["as_of"], d["applied"]
+            self.dataset.uploads = d.get("uploads", {})
         self.seams = {k: Seam.model_validate(v) for k, v in s["seams"].items()}
         self.drafts = {k: Draft.model_validate(v) for k, v in s["drafts"].items()}
         self.signoff, self.history, self.last_verified = s["signoff"], s["history"], s["last_verified"]
@@ -107,7 +119,8 @@ class Engine:
         tmp.write_text(json.dumps({
             "version": STATE_VERSION, "source_sha": source_sha(self.source),
             "bundle": self.bundle.model_dump(mode="json"),
-            "dataset": {"tables": ds.tables, "docs": ds.docs, "as_of": ds.as_of, "applied": ds.applied} if ds else None,
+            "dataset": {"tables": ds.tables, "docs": ds.docs, "as_of": ds.as_of, "applied": ds.applied,
+                        "uploads": ds.uploads} if ds else None,
             "seams": {k: v.model_dump(mode="json") for k, v in self.seams.items()},
             "drafts": {k: v.model_dump(mode="json") for k, v in self.drafts.items()},
             "signoff": self.signoff, "history": self.history, "last_verified": self.last_verified,
@@ -351,6 +364,9 @@ class Engine:
             add(f, "document", len([p for p in text.split("\n\n") if p.strip()]), "paragraphs")
         for f, doc in ds.docs.items():
             add(f, "record", len(doc) if hasattr(doc, "__len__") else 1, "fields")
+        for f, up in ds.uploads.items():
+            add(f, up["kind"], *_upload_size(up))
+            groups[f.partition("/")[0]][-1]["uploaded"] = True
         return {"path": str(self.source), "kind": "folder", "as_of": ds.as_of, "applied_events": len(ds.applied),
                 "departments": [{"key": k, "name": self.DEPT_NAMES.get(k, k.title()),
                                  "files": sorted(groups[k], key=lambda x: (x["kind"] != "document", x["name"]))}
@@ -365,7 +381,54 @@ class Engine:
             return {"file": file, "kind": "document", "text": ds.texts[file]}
         if ds is not None and file in ds.docs:
             return {"file": file, "kind": "record", "json": ds.docs[file]}
+        if ds is not None and file in ds.uploads:
+            up = ds.uploads[file]
+            if up["kind"] == "table":
+                return {"file": file, "kind": "table", "total": len(up["rows"]), "rows": up["rows"][:limit]}
+            return {"file": file, "kind": up["kind"], **{k: up[k] for k in ("text", "json") if k in up}}
         raise GovernanceError(f"unknown source file '{file}'")
+
+    UPLOAD_EXT = (".csv", ".md", ".txt", ".json")
+    UPLOAD_MAX = 1_000_000
+
+    def add_upload(self, dept: str, name: str, data: bytes, actor: str = "ui") -> dict[str, Any]:
+        """Add a reference file to one department's data. It is stored in the engine state, shows in the data
+        panel and is searchable in Q&A, but the compliance checks never read it (they only read the known files)."""
+        self._need_dataset()
+        dept = (dept or "").lower()
+        if dept not in self.DEPT_NAMES:
+            raise ValueError(f"unknown department '{dept}'")
+        name = PurePath((name or "").replace("\\", "/")).name
+        if not name or not name.lower().endswith(self.UPLOAD_EXT):
+            raise ValueError(f"'{name}': only {', '.join(self.UPLOAD_EXT)} files can be added")
+        if len(data) > self.UPLOAD_MAX:
+            raise ValueError(f"'{name}' is larger than {self.UPLOAD_MAX // 1_000_000} MB")
+        key, ds = f"{dept}/{name}", self.dataset
+        if key in ds.tables or key in ds.texts or key in ds.docs:
+            raise ValueError(f"'{key}' is one of the review's own files and cannot be replaced; rename the upload")
+        try:
+            text = data.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            raise ValueError(f"'{name}' is not UTF-8 text") from None
+        if not text.strip():
+            raise ValueError(f"'{name}' is empty")
+        up: dict[str, Any] = {"dept": dept, "by": actor, "at": now()}
+        if name.lower().endswith(".csv"):
+            rows = [dict(r) for r in csv.DictReader(io.StringIO(text))]
+            if not rows:
+                raise ValueError(f"'{name}' has no data rows")
+            up |= {"kind": "table", "rows": rows}
+        elif name.lower().endswith(".json"):
+            try:
+                up |= {"kind": "record", "json": json.loads(text)}
+            except ValueError as exc:
+                raise ValueError(f"'{name}' is not valid JSON: {exc}") from None
+        else:
+            up |= {"kind": "document", "text": text}
+        ds.uploads[key] = up
+        self._log("file_added", actor, {"file": key, "kind": up["kind"], "bytes": len(data)})
+        self.save()
+        return {"file": key, "kind": up["kind"], "size": _upload_size(up)[0], "unit": _upload_size(up)[1]}
 
     def editable(self) -> dict[str, Any]:
         from .whatif import editable

@@ -128,6 +128,15 @@ def build_corpus(engine) -> list[dict]:
                 chunks.append({"source": f"{f}#{key}", "text": _flat(r), "extra": f"{stem} {f}"})
         for f, doc in ds.docs.items():
             chunks += _json_chunks(f, doc)
+        for f, up in ds.uploads.items():          # files a person added through the UI
+            if up["kind"] == "document":
+                chunks += _md_chunks(f, up["text"])
+            elif up["kind"] == "table":
+                stem = f.split("/")[-1].rsplit(".", 1)[0].replace("_", " ")
+                for r in up["rows"]:
+                    chunks.append({"source": f"{f}#{next(iter(r.values()), '')}", "text": _flat(r), "extra": f"{stem} {f}"})
+            else:
+                chunks += _json_chunks(f, up["json"])
         for ev in ds.events:
             chunks.append({"source": f"events/event_stream.json#{ev.get('event_id')}",
                            "text": f"event {ev.get('event_id')} on {ev.get('date')}: {ev.get('description')}"})

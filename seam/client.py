@@ -58,7 +58,7 @@ class SeamClient:
     def _local_call(self, method: str, path: str, body: dict | None) -> Any:
         from fastapi import HTTPException
         from .api import (AuditQuestion, DraftDecision, Event, FileEvent, LiveApply, LiveEvent, LiveField,
-                          LiveQuestion, SignOff)
+                          LiveQuestion, SignOff, UploadFile)
         a = self._engine()
         parts = path.strip("/").split("/")
         try:
@@ -76,6 +76,8 @@ class SeamClient:
                 return a.stream_event(parts[2])
             if path == "/sources":
                 return a.sources()
+            if path == "/sources/upload":
+                return a.source_upload(UploadFile(**body))
             if path.startswith("/sources/content"):
                 return a.source_content(parse_qs(path.split("?", 1)[1])["path"][0])
             if path == "/audit/ask":
@@ -156,6 +158,12 @@ class SeamClient:
 
     def source_content(self, file: str) -> dict:
         return self._call("GET", f"/sources/content?path={quote(file, safe='')}")
+
+    def upload_file(self, dept: str, name: str, data: bytes, actor: str = "ui") -> dict:
+        """Add a csv / md / txt / json reference file to a department. Searchable in Q&A, never read by the checks."""
+        import base64
+        return self._call("POST", "/sources/upload", {"dept": dept, "name": name, "actor": actor,
+                                                       "content_b64": base64.b64encode(data).decode()})
 
     def audit_scope(self, domains: list[str]) -> dict:
         return self._call("GET", f"/audit/scope?domains={','.join(domains)}")

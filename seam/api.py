@@ -17,6 +17,7 @@ Endpoints (the Person 2 <-> Person 3 contract):
   POST /events/custom               apply an ad-hoc event in the stream's file-change format
   POST /events                      typed event (fixtures mode only)
   POST /audit/ask                   {"question"} -> routed to a scoped audit (HR/Finance/Legal, any mix) or a what-if
+  POST /sources/upload               add a csv / md / txt / json reference file to a department
   GET  /audit/scope?domains=HR,Legal  scoped audit without a question (preset buttons)
   GET  /live/editable               tables/rows/columns and doc fields the form editor can change
   POST /live/field                  {"file", "key": {...}, "field", "value"} -> simulation (nothing applied)
@@ -33,6 +34,7 @@ Endpoints (the Person 2 <-> Person 3 contract):
 """
 from __future__ import annotations
 
+import base64
 import os
 import threading
 from pathlib import Path
@@ -171,6 +173,18 @@ class AuditQuestion(BaseModel):
 def sources():
     with lock:
         return engine.sources()
+
+
+class UploadFile(BaseModel):
+    dept: str
+    name: str
+    content_b64: str
+    actor: str = "ui"
+
+
+@app.post("/sources/upload")
+def source_upload(body: UploadFile):
+    return _guard(lambda: engine.add_upload(body.dept, body.name, base64.b64decode(body.content_b64), body.actor))
 
 
 @app.get("/sources/content")

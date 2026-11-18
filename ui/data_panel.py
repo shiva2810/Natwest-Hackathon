@@ -27,6 +27,8 @@ CSS = """
   .ds-table {border-collapse:collapse; font-size:10.5px; white-space:nowrap}
   .ds-table th {position:sticky; top:0; background:#f3f6f4; text-align:left; padding:4px 7px; color:#526158}
   .ds-table td {padding:3px 7px; border-top:1px solid #eef2ef; color:#2d3a33}
+  .ds-new {font-size:9.5px; font-weight:750; letter-spacing:.06em; background:#edf4f9; color:#426b91; border-radius:8px;
+           padding:0 5px; margin-left:5px; vertical-align:1px}
   .ds-note {font-size:11px; color:#8a978f; margin-top:10px; line-height:1.5}
 </style>
 """
@@ -39,6 +41,40 @@ def _table(rows: list[dict]) -> str:
     head = "".join(f"<th>{e(str(k))}</th>" for k in cols)
     body = "".join("<tr>" + "".join(f"<td>{e(str(r.get(k, '')))}</td>" for k in cols) + "</tr>" for r in rows)
     return (f'<div class="ds-scroll"><table class="ds-table"><tr>{head}</tr>{body}</table></div>')
+
+
+ADDED = '<i class="ds-new">ADDED</i>'
+UPLOAD_TYPES = ["csv", "md", "txt", "json"]
+DEPTS = {"hr": "HR", "finance": "Finance", "legal": "Legal", "product": "Product"}
+
+
+def upload_box(c: SeamClient) -> None:
+    """Add files to a department: they are listed, previewable and searchable in Ask, but the checks never read them."""
+    n = st.session_state.get("ds_up_n", 0)          # bumping the key empties the uploader after a successful add
+    with st.expander("➕ Add files", expanded=bool(st.session_state.get("ds_up_msg"))):
+        dept = st.selectbox("Department", list(DEPTS), format_func=DEPTS.get, key="ds_up_dept")
+        files = st.file_uploader("Choose files", type=UPLOAD_TYPES, accept_multiple_files=True,
+                                 key=f"ds_up_{n}", label_visibility="collapsed",
+                                 help="CSV tables, Markdown / text documents or JSON records, up to 1 MB each.")
+        if st.button("Add to data", disabled=not files, width="stretch", key="ds_up_go"):
+            ok, bad = [], []
+            for f in files:
+                try:
+                    c.upload_file(dept, f.name, f.getvalue())
+                    ok.append(f.name)
+                except SeamError as err:
+                    bad.append(f"{f.name}: {err}")
+            st.session_state["ds_up_msg"] = (ok, bad)
+            if ok:
+                st.session_state["ds_up_n"] = n + 1
+                st.rerun()
+        ok, bad = st.session_state.pop("ds_up_msg", ([], []))
+        if ok:
+            st.success(f"Added {', '.join(ok)}")
+        for b in bad:
+            st.error(b)
+        st.caption("Added files can be opened below and are searchable in Ask. They are reference material: the "
+                   "compliance checks only read the review's own files. “Reset to start” removes them.")
 
 
 def render(c: SeamClient) -> None:
@@ -57,15 +93,17 @@ def render(c: SeamClient) -> None:
     st.markdown('<div class="ds-label" style="margin-top:14px">DATA &amp; DOCUMENTS</div>', unsafe_allow_html=True)
     options: dict[str, str] = {}
     for d in src["departments"]:
-        rows = "".join(f'<div class="ds-file"><span>{ICON.get(f["kind"], "")} {e(f["name"])}</span>'
+        rows = "".join(f'<div class="ds-file"><span>{ICON.get(f["kind"], "")} {e(f["name"])}'
+                       f'{ADDED if f.get("uploaded") else ""}</span>'
                        f'<span>{f["size"]} {e(f["unit"])}</span></div>' for f in d["files"])
         st.markdown(f'<div class="ds-dept" style="--c:{COLOR.get(d["name"], "#6b7280")}">{e(d["name"])}</div>{rows}',
                     unsafe_allow_html=True)
         for f in d["files"]:
             options[f"{d['name']} · {f['name']}"] = f["file"]
-    if not src["departments"]:
+    if src["kind"] != "folder":
         st.caption("Running on a records.json file: no source documents to list.")
         return
+    upload_box(c)
 
     choice = st.selectbox("Open a file", ["—", *options], key="ds_open", label_visibility="visible")
     if choice != "—":
