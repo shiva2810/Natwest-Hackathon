@@ -2,13 +2,14 @@
 
 Templates always work offline. If an `llm` callable is passed (Person 1's wrapper, X.1), it is
 asked to rewrite using ONLY the seam facts; any failure or malformed output falls back to the template.
-Expected llm signature: llm(prompt: str) -> dict with keys "explanation" (str) and "fix_options" (list[str]).
+llm(prompt) may return a dict or a JSON string with keys "explanation" (str) and "fix_options" (list[str]).
 """
 from __future__ import annotations
 
 import json
 from typing import Callable
 
+from .llm import parse_json
 from .rules import Seam
 
 TEMPLATES = {
@@ -82,7 +83,7 @@ def explain(seam: Seam, llm: Callable[[str], dict] | None = None) -> Seam:
             'Return JSON: {"explanation": str, "fix_options": [str]}'
         )
         try:
-            out = llm(prompt)
+            out = parse_json(llm(prompt))
             if isinstance(out.get("explanation"), str) and isinstance(out.get("fix_options"), list) and out["fix_options"]:
                 explanation, fixes = out["explanation"], [str(f) for f in out["fix_options"]][:3]
                 seam.facts["explained_by"] = "llm"
