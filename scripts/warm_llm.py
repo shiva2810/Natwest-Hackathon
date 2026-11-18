@@ -44,4 +44,15 @@ for sc in e.scenarios():
     e.apply_scenario(sc["name"])
     print(f"  scenario {sc['name']} in {time.time() - t:.0f}s")
 
+from ui.live_check import EXAMPLES   # pre-ask the live-check examples so the first live answers are instant
+e.run()
+for q in EXAMPLES:
+    t = time.time()
+    try:
+        sim = e.propose_what_if(q)
+        print(f"  live: {q!r} -> {[x['field'] + '=' + x['after'] for x in sim['preview']]} "
+              f"opens {sim['opened']} closes {sim['closed']} ({time.time() - t:.0f}s)")
+    except Exception as exc:
+        print(f"  live: {q!r} -> {exc}")
+
 print(f"done in {time.time() - t0:.0f}s: {llm.misses} live calls, {llm.hits} cache hits -> cache/llm/")

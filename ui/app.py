@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import streamlit as st
 
 from seam.client import SeamClient, SeamError
+from ui.live_check import render as live_check
 
 st.set_page_config(page_title="Compliance passport", layout="wide")
 ICON = {"go": "🟢 GO", "conditional": "🟡 CONDITIONAL", "no_go": "🔴 NO-GO"}
@@ -53,6 +54,8 @@ if "last_diff" in st.session_state:
             f"opened {d['opened'] or '-'}, closed {d['closed'] or '-'}, changed {d['changed'] or '-'}; "
             f"{d['status_before']} → {d['status_after']}; re-checked {len(d['rechecked_nodes'])} nodes "
             f"(matches full: {d['selective_matches_full']})")
+
+live_check(c)
 
 st.subheader("Seams")
 for s in p["seams"]:

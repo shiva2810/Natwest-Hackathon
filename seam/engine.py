@@ -249,6 +249,90 @@ class Engine:
             raise GovernanceError(f"unknown scenario '{name}'")
         return self.apply_dataset_event(json.loads(f.read_text()), actor=f"scenario:{name}")
 
+    # ---------- live what-if checks ----------
+
+    def _need_dataset(self):
+        if self.dataset is None:
+            raise GovernanceError("live what-if checks need the engine to run on a data directory")
+
+    def simulate(self, event: dict[str, Any]) -> dict[str, Any]:
+        """Predict what an event would do. Validates it, changes nothing, logs nothing."""
+        from .checkers import run_checks
+        from .extract import build_bundle
+        from .whatif import validate
+        self._need_dataset()
+        preview = validate(self.dataset, event)
+        work = self.dataset.copy()
+        apply_file_event(work, event)
+        nb, _ = build_bundle(work)                       # deterministic and fast: no model calls
+        run_checks(nb)
+        launch = next(p for p in nb.entities.products if p.id == nb.scenario.product_id).launch_date
+        predicted = {s.id: s for s in rank(detect(build_graph(nb), nb), nb.scenario.as_of, launch)}
+        for sid, sm in predicted.items():                # a waiver survives only if the facts are unchanged
+            old = self.seams.get(sid)
+            if old and old.status == "waived" and old.title == sm.title:
+                sm.status, sm.waiver = old.status, old.waiver
+        before = self.passport()
+        saved = (self.bundle, self.seams)
+        self.bundle, self.seams = nb, predicted
+        try:
+            after = self.passport()
+        finally:
+            self.bundle, self.seams = saved
+        b_ids = {x["id"]: x["title"] for x in before["seams"]}
+        a_ids = {x["id"]: x["title"] for x in after["seams"]}
+        return {
+            "event": event, "preview": preview,
+            "opened": sorted(set(a_ids) - set(b_ids)), "closed": sorted(set(b_ids) - set(a_ids)),
+            "changed": sorted(k for k in set(a_ids) & set(b_ids) if a_ids[k] != b_ids[k]),
+            "status_before": before["overall"], "status_after": after["overall"],
+            "departments": {k: {"before": before["departments"][k]["status"], "after": v["status"]}
+                            for k, v in after["departments"].items() if k in before["departments"]},
+            "seams_after": [{"id": x["id"], "title": x["title"], "severity": x["severity"], "status": x["status"]}
+                            for x in after["seams"]],
+            "signoff_would_reset": bool(set(a_ids) ^ set(b_ids) or any(a_ids[k] != b_ids[k] for k in set(a_ids) & set(b_ids)))
+                                   and self.signoff["state"] in ("go", "no_go"),
+        }
+
+    def propose_what_if(self, question: str) -> dict[str, Any]:
+        """Claude drafts the data change for a plain-English what-if; returns it with a simulation.
+        Draft tier: nothing is applied until a named human confirms with apply_live."""
+        from .whatif import WhatIfError, propose
+        self._need_dataset()
+        if self.policy.enforce("propose_what_if", "agent") != "draft":
+            raise GovernanceError("policy does not allow agents to draft what-ifs")
+        from .llm import OfflineMiss
+        if self.llm is None:
+            raise WhatIfError("no language model configured: use the form editor, or add ANTHROPIC_API_KEY")
+        try:
+            event = propose(question, self.dataset, self.llm)
+        except OfflineMiss:
+            raise WhatIfError("offline and this question was not asked before: use the form editor, "
+                              "or add ANTHROPIC_API_KEY to .env") from None
+        sim = self.simulate(event)
+        self._log("what_if_proposed", "agent", {"question": question, "event": event,
+                                                "predicted": {k: sim[k] for k in ("opened", "closed", "changed",
+                                                                                  "status_before", "status_after")}})
+        return sim
+
+    def apply_live(self, event: dict[str, Any], confirmed_by: str, reason: str = "") -> dict[str, Any]:
+        """Apply a what-if for real. Needs a named human (proposals from a model are draft tier)."""
+        from .whatif import validate
+        self._need_dataset()
+        if len((confirmed_by or "").strip()) < 3:
+            raise GovernanceError("a live change must be confirmed by a named person")
+        validate(self.dataset, event)
+        n = 1 + sum(1 for a in self.dataset.applied if a.startswith("LIVE-"))
+        ev = {**event, "event_id": f"LIVE-{n}", "date": event.get("date") or self.dataset.as_of}
+        if reason:
+            ev["description"] = f"{ev.get('description', '')} (confirmed by {confirmed_by}: {reason})"
+        return self.apply_dataset_event(ev, actor=confirmed_by.strip())
+
+    def editable(self) -> dict[str, Any]:
+        from .whatif import editable
+        self._need_dataset()
+        return editable(self.dataset)
+
     def apply_stream_event(self, event_id: str) -> dict[str, Any]:
         ev = next((e for e in (self.dataset.events if self.dataset else []) if e["event_id"] == event_id), None)
         if ev is None:

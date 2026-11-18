@@ -18,6 +18,17 @@ applied from the UI, `POST /scenarios/<name>`, or `SeamClient().scenario("<name>
 Two processes, no workers or queues: the full pipeline runs in under a second.
 If the API is down, the UI's `SeamClient` runs the engine in-process on the same state file.
 
+## Live demo
+`./scripts/run_demo.sh --fresh`, then open http://localhost:8501 (anyone on the same Wi-Fi can use the
+"Network URL" it prints). The **Live check** panel answers "what if…?" on the spot:
+- *Ask in plain English*: Claude drafts the data change (needs the key; cached answers replay offline)
+- *Edit a record*: pick file, record, field, new value (always works, no model)
+
+Either way you see every before/after, the predicted effect (seams opened/closed, overall status),
+and nothing changes until a named person presses **Apply for real** (audit-logged as LIVE-n).
+`ui/live_check.py` is a drop-in `render(client)` for Person 3's UI. With the API down, the UI runs
+the engine in-process, so the UI alone can also be hosted (e.g. Streamlit Community Cloud, key as a secret).
+
 ## How it fits together
 ```
 data/ (Person 1) ──extract──> records + entities ──LangGraph──> check_departments → build_graph

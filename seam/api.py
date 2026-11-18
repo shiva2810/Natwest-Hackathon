@@ -16,6 +16,11 @@ Endpoints (the Person 2 <-> Person 3 contract):
   POST /scenarios/{name}            apply one -> {"diff", "passport"}
   POST /events/custom               apply an ad-hoc event in the stream's file-change format
   POST /events                      typed event (fixtures mode only)
+  GET  /live/editable               tables/rows/columns and doc fields the form editor can change
+  POST /live/field                  {"file", "key": {...}, "field", "value"} -> simulation (nothing applied)
+  POST /live/propose                {"question"} -> Claude drafts the change -> simulation (nothing applied)
+  POST /live/simulate               {"event"} -> predicted effect (nothing applied)
+  POST /live/apply                  {"event", "confirmed_by", "reason"} -> applied for real
   POST /signoffs                    {"decision": "go|no_go|waive", "signer_name", "signer_role", "reason", "seam_id"?}
   POST /drafts/{id}/approve         {"signer_name", "signer_role", "reason", "params"?: {"owner_id": ...}}
   POST /drafts/{id}/reject          same body
@@ -129,6 +134,59 @@ def scenario(name: str):
 @app.post("/events/custom")
 def custom_event(ev: FileEvent):
     return _guard(lambda: engine.apply_dataset_event(ev.model_dump(), actor="custom"))
+
+
+class LiveField(BaseModel):
+    file: str
+    key: dict[str, str] = {}
+    field: str
+    value: Any
+    description: str = ""
+
+
+class LiveQuestion(BaseModel):
+    question: str
+
+
+class LiveEvent(BaseModel):
+    event: dict[str, Any]
+
+
+class LiveApply(BaseModel):
+    event: dict[str, Any]
+    confirmed_by: str
+    reason: str = ""
+
+
+@app.get("/live/editable")
+def live_editable():
+    return _guard(engine.editable)
+
+
+@app.post("/live/field")
+def live_field(body: LiveField):
+    from .whatif import field_change
+
+    def _do():
+        engine._need_dataset()
+        ev = field_change(engine.dataset, body.file, body.key, body.field, body.value, body.description)
+        return engine.simulate(ev)
+    return _guard(_do)
+
+
+@app.post("/live/propose")
+def live_propose(body: LiveQuestion):
+    return _guard(lambda: engine.propose_what_if(body.question))
+
+
+@app.post("/live/simulate")
+def live_simulate(body: LiveEvent):
+    return _guard(lambda: engine.simulate(body.event))
+
+
+@app.post("/live/apply")
+def live_apply(body: LiveApply):
+    return _guard(lambda: engine.apply_live(body.event, body.confirmed_by, body.reason))
 
 
 @app.post("/events")

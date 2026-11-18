@@ -52,7 +52,7 @@ class SeamClient:
 
     def _local_call(self, method: str, path: str, body: dict | None) -> Any:
         from fastapi import HTTPException
-        from .api import DraftDecision, Event, FileEvent, SignOff
+        from .api import DraftDecision, Event, FileEvent, LiveApply, LiveEvent, LiveField, LiveQuestion, SignOff
         a = self._engine()
         parts = path.strip("/").split("/")
         try:
@@ -68,6 +68,16 @@ class SeamClient:
                 return a.stream()
             if parts[:2] == ["events", "stream"]:
                 return a.stream_event(parts[2])
+            if path == "/live/editable":
+                return a.live_editable()
+            if path == "/live/field":
+                return a.live_field(LiveField(**body))
+            if path == "/live/propose":
+                return a.live_propose(LiveQuestion(**body))
+            if path == "/live/simulate":
+                return a.live_simulate(LiveEvent(**body))
+            if path == "/live/apply":
+                return a.live_apply(LiveApply(**body))
             if path == "/scenarios":
                 return a.scenarios()
             if parts[0] == "scenarios":
@@ -119,6 +129,26 @@ class SeamClient:
         """Ad-hoc what-if in the event-stream file-change format."""
         return self._call("POST", "/events/custom", {"event_id": event_id, "description": description,
                                                       "date": date, "changes": changes})
+
+    # ---------- live what-if checks ----------
+
+    def editable(self) -> dict:
+        return self._call("GET", "/live/editable")
+
+    def what_if_field(self, file: str, key: dict, field: str, value, description: str = "") -> dict:
+        """Simulate a one-field change (nothing applied). Works offline."""
+        return self._call("POST", "/live/field", {"file": file, "key": key, "field": field, "value": value,
+                                                  "description": description})
+
+    def what_if_question(self, question: str) -> dict:
+        """Claude drafts the change for a plain-English what-if; returns a simulation (nothing applied)."""
+        return self._call("POST", "/live/propose", {"question": question})
+
+    def simulate(self, event: dict) -> dict:
+        return self._call("POST", "/live/simulate", {"event": event})
+
+    def apply_live(self, event: dict, confirmed_by: str, reason: str = "") -> dict:
+        return self._call("POST", "/live/apply", {"event": event, "confirmed_by": confirmed_by, "reason": reason})
 
     def sign(self, decision: str, signer_name: str, signer_role: str, reason: str,
              seam_id: str | None = None) -> dict:
