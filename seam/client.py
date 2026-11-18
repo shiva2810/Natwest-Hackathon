@@ -46,7 +46,11 @@ class SeamClient:
                 self.mode = "in-process"          # backend died mid-demo: carry on locally
                 return self._call(method, path, body)
             if r.status_code >= 400:
-                raise SeamError(r.json().get("detail", r.text))
+                try:
+                    detail = r.json().get("detail", r.text)
+                except ValueError:                        # non-JSON error page (e.g. a 500)
+                    detail = f"server error {r.status_code}: {r.text[:200]}"
+                raise SeamError(detail)
             return r.json()
         return self._local_call(method, path, body)
 

@@ -45,7 +45,7 @@ def render(c: SeamClient):
                 _audit_answer(m["audit"])
             elif "simulation" in m:
                 sim = m["simulation"]
-                st.caption(f"Routed by {m['via']} to: what-if (nothing applied yet; use Live check below to apply)")
+                st.caption(f"Routed by {m['via']} to: what-if (nothing applied yet; open '🧪 Live check' to apply)")
                 st.markdown(f"**{sim['event'].get('description', '')}** → overall {ICON[sim['status_before']]} → "
                             f"{ICON[sim['status_after']]}; would open {sim['opened'] or '-'}, close {sim['closed'] or '-'}, "
                             f"change {sim['changed'] or '-'}")

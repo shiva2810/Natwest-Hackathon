@@ -63,6 +63,9 @@ class AuditLog:
         return hashlib.sha256(payload.encode()).hexdigest()
 
     def entries(self) -> list[dict[str, Any]]:
+        if not self.path.exists():                       # file removed under a running server: recreate
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self.path.touch()
         return [json.loads(l) for l in self.path.read_text().splitlines() if l.strip()]
 
     def append(self, kind: str, actor: str, data: dict[str, Any], policy_version: str) -> dict[str, Any]:
