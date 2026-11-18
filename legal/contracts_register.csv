@@ -1,0 +1,9 @@
+contract_id,counterparty,vendor_id,contract_type,start_date,end_date,auto_renew,dpa_required,dpa_signed,legal_owner_id,notes
+C-2025-011,EuroCloud Hosting GmbH,V001,Master services agreement,2025-03-01,2027-02-28,N,Y,Y,E009,
+C-2025-011-A,EuroCloud Hosting GmbH,V001,Capacity add-on addendum,2025-11-01,2026-10-31,N,Y,Y,E009,Renewal not actioned
+C-2026-031,StreamLedger Inc,V002,SaaS agreement with DPA,2026-10-01,2027-09-30,Y,Y,Y,E009,
+C-2025-014,Banc Link Ltd,V004,Services agreement,2025-06-01,2028-05-31,N,Y,Y,E009,
+C-2025-020,Harbor Analytics Inc,V003,Subscription,2025-07-01,2026-12-31,Y,N,N,E009,No customer data involved
+C-2026-007,LexAdvisory LLP,V005,Engagement letter,2026-02-01,2027-01-31,N,N,N,E003,
+C-2026-012,BrightMark Agency Ltd,V006,Services agreement,2026-10-01,2026-12-31,N,N,N,E009,
+C-2026-040,PulseWatch Ltd,V008,Subscription,2026-12-01,2027-11-30,Y,N,N,E009,Starts on launch day

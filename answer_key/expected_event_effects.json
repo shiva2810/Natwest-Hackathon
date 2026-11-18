@@ -1,0 +1,117 @@
+{
+  "note": "Effects are cumulative. Open seams are listed after each event is applied.",
+  "baseline": {
+    "open_seams": [
+      "S1",
+      "S2",
+      "S3",
+      "S4",
+      "S5"
+    ]
+  },
+  "events": [
+    {
+      "event_id": "EV-01",
+      "expect": {
+        "s2_untrained": [
+          "E013",
+          "E015"
+        ]
+      },
+      "open_seams": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "narrative": "S2 shrinks from three people to two but stays open."
+    },
+    {
+      "event_id": "EV-02",
+      "expect": {
+        "leg_c5_exceptions": []
+      },
+      "open_seams": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "narrative": "The unknown on the regulator notification becomes met."
+    },
+    {
+      "event_id": "EV-03",
+      "expect": {
+        "s3_non_eea_processors": [
+          "V002",
+          "V007"
+        ]
+      },
+      "open_seams": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "narrative": "A second non-EEA processor appears. Finance and Legal paperwork for it is clean, so no department flags it."
+    },
+    {
+      "event_id": "EV-04",
+      "expect": {
+        "s1_legal_references": [],
+        "s1_finance_references": [
+          "PO-2026-0450",
+          "SCOPE:QuickPay product spend"
+        ],
+        "s1_blocked_pending_pos": []
+      },
+      "open_seams": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "narrative": "Legal side of S1 is fixed. The Finance side remains."
+    },
+    {
+      "event_id": "EV-05",
+      "expect": {
+        "s1_legal_references": [],
+        "s1_finance_references": [
+          "PO-2026-0450",
+          "SCOPE:QuickPay product spend"
+        ],
+        "s1_blocked_pending_pos": [
+          "PO-2026-0450"
+        ]
+      },
+      "open_seams": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "narrative": "The pending purchase order is now stuck with someone who has left."
+    },
+    {
+      "event_id": "EV-06",
+      "expect": {
+        "s1_legal_references": [],
+        "s1_finance_references": [],
+        "s1_blocked_pending_pos": []
+      },
+      "open_seams": [
+        "S2",
+        "S3",
+        "S4",
+        "S5"
+      ],
+      "narrative": "S1 is fully resolved. The passport improves but stays no-go."
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "product": "QuickPay",
+  "approval_id": "APR-2026-014",
+  "approved_version": "1.4",
+  "approved_on": "2026-06-12",
+  "valid_until": "2027-06-12",
+  "scope": "UK domestic instant payments between small-business accounts",
+  "accountable_senior_manager": "E004",
+  "approved_by": [
+    "E003"
+  ],
+  "conditions": [
+    "Customer payment data is processed and stored only in the United Kingdom or the European Economic Area.",
+    "Staff who sell or onboard customers hold valid Payments Conduct Training (PCT-101).",
+    "Material changes require re-approval under the Product Change Control Policy before release."
+  ],
+  "legal_register_status": "approved"
+}

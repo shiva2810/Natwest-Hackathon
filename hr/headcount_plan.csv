@@ -1,0 +1,10 @@
+department,approved_heads,filled_heads,open_reqs,weekly_contract_hours_per_head,hiring_status,frozen_until,notes
+Operations,1,1,0,40,open,,
+Finance,3,3,0,40,open,,
+Legal,2,2,0,40,open,,
+Product,2,1,1,40,open,,One open requisition for a product analyst
+HR,2,2,0,40,open,,
+Sales,10,9,1,40,open,,Head of sales plus 8 sales executives on QuickPay
+Support,7,7,0,40,frozen,2027-03-31,Head of support plus 6 queue agents. Company-wide cost freeze; exceptions need COO and Head of Finance approval
+Engineering,2,1,1,40,open,,Modelled slice of the engineering team
+Marketing,1,1,0,40,open,,

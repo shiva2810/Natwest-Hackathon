@@ -1,0 +1,8 @@
+vendor_id,vendor_name,service_description,country,handles_customer_data,data_processing_region,dd_status,dd_completed_date,dd_scope,annual_value_gbp,contract_ref,business_owner_id,status
+V001,EuroCloud Hosting GmbH,Cloud hosting for the QuickPay platform,Germany,Y,EU-Frankfurt,completed,2025-02-20,financial; sanctions; adverse media,240000,C-2025-011,E010,active
+V002,StreamLedger Inc,Payment analytics and fraud scoring,United States,Y,US-East,completed,2026-09-22,financial; sanctions; adverse media,180000,C-2026-031,E010,active
+V003,Harbor Analytics Inc,Office productivity suite (internal use only),United States,N,US-East,completed,2025-06-12,financial; sanctions; adverse media,24000,C-2025-020,E008,active
+V004,Banc Link Ltd,Open banking connectivity,United Kingdom,Y,UK-London,completed,2025-05-10,financial; sanctions; adverse media,150000,C-2025-014,E010,active
+V005,LexAdvisory LLP,External legal counsel,United Kingdom,N,UK-London,completed,2026-01-15,financial; sanctions; adverse media,38000,C-2026-007,E003,active
+V006,BrightMark Agency Ltd,Launch marketing campaign,United Kingdom,N,UK-London,completed,2026-09-30,financial; sanctions; adverse media,62000,C-2026-012,E027,active
+V008,PulseWatch Ltd,Monitoring and on-call tooling,United Kingdom,N,UK-London,completed,2026-11-03,financial; sanctions; adverse media,45000,C-2026-040,E010,active

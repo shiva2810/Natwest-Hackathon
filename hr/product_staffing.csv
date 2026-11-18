@@ -1,0 +1,19 @@
+employee_id,product,role_on_product,allocation_pct,can_sell_or_onboard,selling_from
+E004,QuickPay,Accountable Senior Manager,100,N,
+E010,QuickPay,Engineering Lead,80,N,
+E006,QuickPay,Sales Lead,20,N,
+E007,QuickPay,Support Lead,20,N,
+E011,QuickPay,Sales Executive,100,Y,2026-12-01
+E012,QuickPay,Sales Executive,100,Y,2026-12-01
+E013,QuickPay,Sales Executive,100,Y,2026-12-01
+E014,QuickPay,Sales Executive,100,Y,2026-12-01
+E015,QuickPay,Sales Executive,100,Y,2026-12-01
+E016,QuickPay,Sales Executive,100,Y,2026-12-01
+E017,QuickPay,Sales Executive,100,Y,2026-12-01
+E018,QuickPay,Sales Executive,100,Y,2026-12-01
+E019,QuickPay,Support Agent,100,N,
+E020,QuickPay,Support Agent,100,N,
+E021,QuickPay,Support Agent,100,N,
+E022,QuickPay,Support Agent,100,N,
+E023,QuickPay,Support Agent,100,N,
+E024,QuickPay,Support Agent,100,N,

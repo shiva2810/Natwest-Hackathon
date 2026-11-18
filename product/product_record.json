@@ -1,0 +1,62 @@
+{
+  "product": "QuickPay",
+  "description": "Instant payments service for small businesses",
+  "live_version": "1.4",
+  "release_candidate": "2.0",
+  "launch_date": "2026-12-01",
+  "product_owner": "E004",
+  "engineering_lead": "E010",
+  "change_control_request_filed": false,
+  "changes": [
+    {
+      "id": "CHG-01",
+      "description": "Cross-border payments to EU beneficiaries",
+      "change_type": "new_feature",
+      "material": true
+    },
+    {
+      "id": "CHG-02",
+      "description": "Transaction analytics and fraud scoring via StreamLedger",
+      "change_type": "new_third_party_processor",
+      "material": true,
+      "vendor_id": "V002"
+    },
+    {
+      "id": "CHG-03",
+      "description": "Premium support tier with 24x7 support",
+      "change_type": "new_service_commitment",
+      "material": true
+    },
+    {
+      "id": "CHG-04",
+      "description": "Refreshed payment history screen",
+      "change_type": "cosmetic",
+      "material": false
+    }
+  ],
+  "data_flows": [
+    {
+      "processor_vendor_id": "V001",
+      "data_category": "customer payment data",
+      "purpose": "hosting"
+    },
+    {
+      "processor_vendor_id": "V004",
+      "data_category": "customer payment data",
+      "purpose": "open banking connectivity"
+    },
+    {
+      "processor_vendor_id": "V002",
+      "data_category": "customer payment data",
+      "purpose": "analytics and fraud scoring"
+    }
+  ],
+  "premium_support_tier": {
+    "enabled": true,
+    "launch_date": "2026-12-01"
+  },
+  "sales_enablement": {
+    "assigned_sellers": 8,
+    "first_sales_date": "2026-12-01"
+  }
+}

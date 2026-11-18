@@ -1,0 +1,152 @@
+{
+  "as_of": "2026-11-18",
+  "launch_date": "2026-12-01",
+  "seams": [
+    {
+      "seam_id": "S1",
+      "type": "orphaned_obligation",
+      "title": "Accountable owner leaves before launch",
+      "departments": [
+        "HR",
+        "Legal",
+        "Finance"
+      ],
+      "severity": "high",
+      "blocks_launch": true,
+      "evidence": [
+        "hr/roster.csv: E004 last working day 2026-11-27, before launch 2026-12-01",
+        "legal/product_approval.json: accountable_senior_manager = E004",
+        "legal/obligations_register.csv: OBL-L-001, OBL-L-003, OBL-L-006 owned by E004",
+        "finance/approval_limits.csv: E004 is the only approver for QuickPay product spend, no delegate",
+        "finance/purchase_orders.csv: PO-2026-0450 pending with E004"
+      ],
+      "why_no_single_department_sees_it": "HR sees a normal leaver process. Legal sees a named owner. Finance sees a valid approver. Only together do they show the owner is gone at launch.",
+      "detection_logic": "Owner or approver status is left, or serving notice with last working day before launch; scope has no other active approver.",
+      "suggested_resolution": "Name a successor, reassign Legal obligations, update the Finance approval table and reroute pending purchase orders.",
+      "resolver_role": "Head of HR with General Counsel and Head of Finance",
+      "validation": {
+        "legal_references": [
+          "ASM:E004",
+          "OBL-L-001",
+          "OBL-L-003",
+          "OBL-L-006"
+        ],
+        "finance_references": [
+          "PO-2026-0450",
+          "SCOPE:QuickPay product spend"
+        ]
+      }
+    },
+    {
+      "seam_id": "S2",
+      "type": "unmet_dependency",
+      "title": "Sellers without valid conduct training at launch",
+      "departments": [
+        "HR",
+        "Legal"
+      ],
+      "severity": "high",
+      "blocks_launch": false,
+      "evidence": [
+        "legal/legal_policies_excerpt.md: Conduct Policy 5.3",
+        "hr/product_staffing.csv: 8 sellers assigned to QuickPay sales from 2026-12-01",
+        "hr/training_records.csv: E013 PCT-101 expires 2026-11-25; E014 and E015 never started"
+      ],
+      "why_no_single_department_sees_it": "HR's mandatory list has only COC-100 and DPA-110. Legal holds the rule but not the training records.",
+      "detection_logic": "For each seller, PCT-101 must be valid on the launch date; no record, not started, or expiry before launch is a violation.",
+      "suggested_resolution": "Complete training before launch or remove the three from selling until they are valid.",
+      "resolver_role": "Head of Sales with Head of HR",
+      "validation": {
+        "untrained_at_launch": [
+          "E013",
+          "E014",
+          "E015"
+        ]
+      }
+    },
+    {
+      "seam_id": "S3",
+      "type": "contradiction",
+      "title": "Customer data processed outside UK and EEA",
+      "departments": [
+        "Legal",
+        "Finance"
+      ],
+      "severity": "critical",
+      "blocks_launch": true,
+      "evidence": [
+        "legal/customer_terms_v2.0_excerpt.md: 7.2 UK or EEA only",
+        "product/product_record.json: StreamLedger (V002) receives customer payment data in v2.0",
+        "finance/vendors.csv: V002 handles customer data, processing region US-East"
+      ],
+      "why_no_single_department_sees_it": "Finance records the region but not the contract promise. Legal records the promise and a signed DPA but not the region.",
+      "detection_logic": "Processors in the product's data flows that handle customer data with a processing region outside UK and EEA.",
+      "suggested_resolution": "Move processing to UK or EEA, or remove StreamLedger from the v2.0 data flow before launch.",
+      "resolver_role": "General Counsel with Engineering Lead",
+      "validation": {
+        "non_eea_processors": [
+          "V002"
+        ]
+      }
+    },
+    {
+      "seam_id": "S4",
+      "type": "promise_without_capacity",
+      "title": "24x7 support promised without staff or budget",
+      "departments": [
+        "Legal",
+        "Finance",
+        "HR"
+      ],
+      "severity": "high",
+      "blocks_launch": true,
+      "evidence": [
+        "legal/customer_terms_v2.0_excerpt.md: 9.1 24x7 with two agents at all times",
+        "legal/obligations_register.csv: OBL-L-005 min_hours_per_week=336",
+        "finance/budget.csv: B-001 six FTE, business hours only",
+        "hr/headcount_plan.csv: Support hiring frozen until 2027-03-31",
+        "hr/product_staffing.csv: 6 support agents"
+      ],
+      "why_no_single_department_sees_it": "Legal wrote the promise. Finance funded business hours. HR is within headcount and the freeze. No one compares required hours with available hours.",
+      "detection_logic": "Required staffed hours (168 x 2 = 336) minus agents x weekly contract hours (6 x 40 = 240) = 96 hours short, with hiring frozen past launch.",
+      "suggested_resolution": "Approve a freeze exception and out-of-hours budget, buy a managed overnight service, or delay the Premium tier.",
+      "resolver_role": "COO with Head of Support and Head of Finance",
+      "validation": {
+        "required_hours_per_week": 336,
+        "available_hours_per_week": 240,
+        "shortfall_hours_per_week": 96
+      }
+    },
+    {
+      "seam_id": "S5",
+      "type": "stale_evidence",
+      "title": "Approval covers v1.4 but v2.0 ships",
+      "departments": [
+        "Legal",
+        "Product"
+      ],
+      "severity": "high",
+      "blocks_launch": true,
+      "evidence": [
+        "legal/product_approval.json: approved_version 1.4",
+        "product/product_record.json: release_candidate 2.0 with three material changes and no change control request",
+        "legal/legal_policies_excerpt.md: Change Control Policy 2"
+      ],
+      "why_no_single_department_sees_it": "Legal's approval is valid and unexpired for v1.4. The product record that shows v2.0 is not part of Legal's data.",
+      "detection_logic": "Approved version differs from release candidate and at least one change is material with no change control request filed.",
+      "suggested_resolution": "File a change control request and obtain Legal re-approval for v2.0 before release.",
+      "resolver_role": "Accountable senior manager with General Counsel",
+      "validation": {
+        "approved_version": "1.4",
+        "release_candidate": "2.0",
+        "material_changes": [
+          "CHG-01",
+          "CHG-02",
+          "CHG-03"
+        ]
+      }
+    }
+  ],
+  "department_only_view": "Each department shows minor findings only (HR 1, Finance 1 purchase order, Legal 1 expired contract and 1 unknown). Nothing blocks launch.",
+  "seam_view": "Five seams. S1, S3, S4 and S5 block launch. S2 is conditional (restrict selling to trained staff)."
+}

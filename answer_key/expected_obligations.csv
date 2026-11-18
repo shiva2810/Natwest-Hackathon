@@ -1,0 +1,20 @@
+obligation_id,department,source_doc,clause,short_statement,type,key_parameters
+OBL-H-001,HR,HR Policy,3.1,Department must not exceed approved headcount,headcount,
+OBL-H-002,HR,HR Policy,4.1,All employees complete COC-100 every 12 months,training,course=COC-100; validity_months=12
+OBL-H-003,HR,HR Policy,4.2,All employees complete DPA-110 every 12 months,training,course=DPA-110; validity_months=12
+OBL-H-004,HR,HR Policy,6.2,HR starts leaver checklist on resignation (HR systems only); managers reassign duties in other systems,leaver_process,
+OBL-H-005,HR,HR Policy,7.1,Support hiring freeze until 2027-03-31; exceptions need COO and Head of Finance,hiring_freeze,frozen_until=2027-03-31
+OBL-F-001,Finance,Finance Policy,2.1,Committed spend must not exceed approved budget line,budget,
+OBL-F-002,Finance,Finance Policy,3.2,PO approver limit must be at least the PO amount,approval_limit,
+OBL-F-003,Finance,Finance Policy,3.3,"Product spend above 40,000 GBP also needs the product's accountable senior manager",approval_routing,threshold_gbp=40000
+OBL-F-004,Finance,Finance Policy,4.1,Supplier due diligence complete before first PO approval,due_diligence,
+OBL-L-001,Legal,Product Approval Policy,1,Each payments product holds a current unexpired Legal approval,approval,
+OBL-L-002,Legal,Conduct Policy,5.3,Only staff with valid PCT-101 may sell or onboard,training,course=PCT-101; validity_months=12
+OBL-L-003,Legal,Customer Terms v2.0,7.2,"Customer payment data processed and stored only in UK or EEA, including sub-processors",data_residency,"allowed_regions=UK,EEA"
+OBL-L-004,Legal,Customer Terms v2.0,8.4,Complaints procedure documented and reviewed annually,policy_review,
+OBL-L-005,Legal,Customer Terms v2.0,9.1,"Premium tier: 24x7 support, two agents at all times, 15-minute first response",service_level,min_hours_per_week=336
+OBL-L-006,Legal,Conduct Policy,5.4,Notify regulator 5 business days before launching a new payments feature,regulatory_notification,due_date=2026-11-24
+OBL-L-007,Legal,Product Change Control Policy,2,Material changes need Legal re-approval before release,change_control,
+OBL-L-008,Legal,Contract Policy,4.1,Active supplier contracts must not be past end date,contract_validity,
+OBL-L-009,Legal,Customer Terms v2.0,10.1,Each product has a named accountable senior manager who is available,accountability,
+OBL-L-010,Legal,Contract Policy,4.2,DPA signed before a supplier processes customer data,dpa,

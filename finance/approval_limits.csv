@@ -1,0 +1,6 @@
+approver_id,role_title,scope,limit_gbp,delegate_id,valid_from,valid_to
+E001,Chief Operating Officer,All spend,1000000,,2026-01-01,2026-12-31
+E002,Head of Finance,All spend,500000,E001,2026-01-01,2026-12-31
+E004,QuickPay Accountable Senior Manager,QuickPay product spend,250000,,2026-01-01,2026-12-31
+E008,Procurement Manager,All procurement,50000,E002,2026-01-01,2026-12-31
+E027,Marketing Manager,Marketing spend,25000,E001,2026-01-01,2026-12-31

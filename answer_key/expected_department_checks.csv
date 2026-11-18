@@ -1,0 +1,15 @@
+check_id,department,check,expected_status,exceptions,source_files,notes
+HR-C1,HR,Code of Conduct (COC-100) valid for all active staff,met,,hr/training_records.csv,
+HR-C2,HR,Data Protection (DPA-110) valid for all active staff,unmet,E022,hr/training_records.csv,Lucas Meyer's DPA-110 expired 2026-10-20
+HR-C3,HR,Leaver checklist started for staff serving notice,met,,hr/roster.csv,E004 checklist initiated. HR sees nothing wrong.
+HR-C4,HR,Filled headcount does not exceed approved headcount,met,,hr/headcount_plan.csv,
+HR-C5,HR,Frozen departments have no open requisitions,met,,hr/headcount_plan.csv,
+FIN-C1,Finance,Committed spend within approved budget on every line,met,,finance/budget.csv,
+FIN-C2,Finance,Approved PO amount is within the approver's limit,unmet,PO-2026-0412,finance/purchase_orders.csv; finance/approval_limits.csv,"62,000 GBP approved by an approver with a 50,000 GBP limit"
+FIN-C3,Finance,"Product spend above 40,000 GBP approved by the accountable senior manager",unmet,PO-2026-0412,finance/purchase_orders.csv; finance/approval_limits.csv,Same purchase order as FIN-C2
+FIN-C4,Finance,Supplier due diligence completed before first approved PO,met,,finance/vendors.csv; finance/purchase_orders.csv,Due diligence does not cover where data is processed
+LEG-C1,Legal,"Product has a current, unexpired Legal approval",met,,legal/product_approval.json,Approval covers v1.4 and is unexpired. Legal is unaware of v2.0.
+LEG-C2,Legal,Every obligation has a named owner and a self-attestation reviewed in the last 12 months,met,,legal/obligations_register.csv,"Legal cannot see the roster, so it cannot tell that a named owner is leaving. Self-attestation is not primary evidence."
+LEG-C3,Legal,Active supplier contracts are not past their end date,unmet,C-2025-011-A,legal/contracts_register.csv,EuroCloud capacity addendum ended 2026-10-31
+LEG-C4,Legal,DPA signed for every contract that requires one,met,,legal/contracts_register.csv,A signed DPA says nothing about processing location
+LEG-C5,Legal,Evidence located for obligations where Legal holds the evidence,unknown,OBL-L-006,legal/obligations_register.csv,"No regulator notification on file. Due 2026-11-24, so not yet overdue."

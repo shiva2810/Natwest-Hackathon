@@ -1,0 +1,8 @@
+po_id,vendor_id,description,amount_gbp,cost_center,product,requested_by,approver,approval_date,status
+PO-2026-0398,V001,Annual cloud hosting,240000,CC-4200,QuickPay,E010,E004,2026-09-14,approved
+PO-2026-0405,V002,Payment analytics and fraud scoring,180000,CC-4200,QuickPay,E010,E004,2026-10-05,approved
+PO-2026-0412,V006,QuickPay launch campaign,62000,CC-4300,QuickPay,E027,E008,2026-10-12,approved
+PO-2026-0420,V004,Open banking connectivity,150000,CC-4200,QuickPay,E010,E004,2026-09-28,approved
+PO-2026-0431,V003,Office productivity licences,24000,CC-4600,Corporate,E026,E008,2026-07-02,approved
+PO-2026-0436,V005,External counsel retainer,38000,CC-4500,Corporate,E009,E008,2026-02-12,approved
+PO-2026-0450,V008,Launch monitoring and on-call tooling,45000,CC-4700,QuickPay,E010,E004,,pending_approval

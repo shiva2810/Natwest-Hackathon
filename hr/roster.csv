@@ -1,0 +1,29 @@
+employee_id,full_name,department,job_title,manager_id,status,last_working_day,leaver_checklist,location
+E001,Helena Brandt,Operations,Chief Operating Officer,,active,,NA,London
+E002,Arjun Rao,Finance,Head of Finance,E001,active,,NA,London
+E003,Sofia Marchetti,Legal,General Counsel,E001,active,,NA,London
+E004,Meera Iyer,Product,Head of Payments Product,E001,serving_notice,2026-11-27,initiated,London
+E005,Tom Alder,HR,Head of HR,E001,active,,NA,London
+E006,Neha Kapoor,Sales,Head of SME Sales,E001,active,,NA,Manchester
+E007,Liam O'Connor,Support,Head of Customer Support,E001,active,,NA,Edinburgh
+E008,Yusuf Demir,Finance,Procurement Manager,E002,active,,NA,London
+E009,Grace Kim,Legal,Legal Counsel,E003,active,,NA,London
+E010,Priya Sharma,Engineering,Engineering Lead,E004,active,,NA,London
+E011,Carlos Mendes,Sales,Sales Executive,E006,active,,NA,Manchester
+E012,Aisha Khan,Sales,Sales Executive,E006,active,,NA,Manchester
+E013,Ben Foster,Sales,Sales Executive,E006,active,,NA,Leeds
+E014,Chloe Dubois,Sales,Sales Executive,E006,active,,NA,London
+E015,Dmitri Volkov,Sales,Sales Executive,E006,active,,NA,London
+E016,Eva Lindqvist,Sales,Sales Executive,E006,active,,NA,Manchester
+E017,Farid Hassan,Sales,Sales Executive,E006,active,,NA,Birmingham
+E018,Hannah Weiss,Sales,Sales Executive,E006,active,,NA,London
+E019,Isabel Torres,Support,Support Agent,E007,active,,NA,Edinburgh
+E020,Jamal Brooks,Support,Support Agent,E007,active,,NA,Edinburgh
+E021,Kavya Menon,Support,Support Agent,E007,active,,NA,Edinburgh
+E022,Lucas Meyer,Support,Support Agent,E007,active,,NA,Edinburgh
+E023,Mina Park,Support,Support Agent,E007,active,,NA,Glasgow
+E024,Noah Fischer,Support,Support Agent,E007,active,,NA,Glasgow
+E025,Olivia Grant,HR,HR Business Partner,E005,active,,NA,London
+E026,Pavel Novak,Finance,Finance Analyst,E002,active,,NA,London
+E027,Quentin Hale,Marketing,Marketing Manager,E001,active,,NA,London
+E028,Rita Alvarez,Sales,Sales Executive,E006,left,2026-09-15,complete,Manchester

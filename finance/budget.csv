@@ -1,0 +1,11 @@
+line_id,fiscal_year,cost_center,product,line_item,category,approved_budget_gbp,committed_gbp,spent_ytd_gbp,owner_id,coverage_notes
+B-001,2026,CC-4100,QuickPay,Support staff (6 FTE),people,420000,420000,310000,E007,Business hours Mon-Fri 08:00-18:00; no out-of-hours line
+B-002,2026,CC-4100,QuickPay,Support tooling,tools,60000,52000,41000,E007,
+B-003,2026,CC-4200,QuickPay,Cloud hosting (EuroCloud),vendor,240000,240000,160000,E010,
+B-004,2026,CC-4200,QuickPay,Payment analytics (StreamLedger),vendor,180000,180000,45000,E010,
+B-005,2026,CC-4200,QuickPay,Open banking connectivity (Banc Link),vendor,150000,150000,95000,E010,
+B-006,2026,CC-4300,QuickPay,Launch campaign agency (BrightMark),marketing,90000,62000,0,E027,
+B-007,2026,CC-4400,QuickPay,Sales team (8 FTE),people,640000,640000,480000,E006,
+B-008,2026,CC-4500,Corporate,External counsel (LexAdvisory),vendor,60000,38000,20000,E003,
+B-009,2026,CC-4600,Corporate,Office productivity (Harbor Analytics),vendor,30000,24000,24000,E008,
+B-010,2026,CC-4700,QuickPay,Launch monitoring tooling (PulseWatch),vendor,50000,45000,0,E010,

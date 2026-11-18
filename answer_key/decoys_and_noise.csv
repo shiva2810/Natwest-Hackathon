@@ -1,0 +1,13 @@
+item_id,kind,where,why_it_must_not_be_flagged
+D1,decoy,finance/vendors.csv V003 Harbor Analytics Inc,US supplier but handles no customer data and is not in the QuickPay data flows. A naive 'US vendor' rule would flag it wrongly.
+D2,decoy,hr/roster.csv E028 Rita Alvarez,Left on 2026-09-15 and owns nothing. A naive 'left employee' rule would flag her wrongly.
+D3,decoy,hr/training_records.csv E017 Farid Hassan,"PCT-101 valid until 2027-02-18, so valid on launch."
+D4,decoy,hr/training_records.csv E020-E024,"Support agents have no PCT-101 but do not sell or onboard, so it is not required."
+D5,decoy,legal/obligations_register.csv OBL-L-004,"Complaints procedure reviewed 2026-03-01, within 12 months."
+D6,decoy,legal/obligations_register.csv OBL-L-006,"Regulator notification not on file but due 2026-11-24, so it is unknown, not overdue."
+D7,decoy,finance/purchase_orders.csv PO-2026-0436,"38,000 GBP corporate spend is within the approver's limit and below the 40,000 GBP product threshold."
+N1,noise_clause,hr/hr_policy_excerpt.md 5.1,Remote working is not an obligation to extract.
+N2,noise_clause,hr/hr_policy_excerpt.md 6.1,"Descriptive, not an obligation to test."
+N3,noise_clause,finance/finance_policy_excerpt.md 5.1,Expense claim rule is out of scope for this dataset.
+N4,noise_clause,legal/customer_terms_v2.0_excerpt.md 7.1 and 11.1,Not testable obligations.
+N5,noise_clause,legal/legal_policies_excerpt.md 6.1,Records retention is out of scope.
