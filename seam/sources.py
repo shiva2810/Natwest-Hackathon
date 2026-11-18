@@ -96,6 +96,6 @@ def apply_event(ds: Dataset, event: dict[str, Any]) -> list[str]:
     for ch in event["changes"]:
         touched += apply_change(work, ch)
     ds.tables, ds.docs = work.tables, work.docs
-    ds.as_of = event.get("date", ds.as_of)
+    ds.as_of = max(ds.as_of, event.get("date") or ds.as_of)   # time only moves forward
     ds.applied.append(event.get("event_id", "?"))
     return touched

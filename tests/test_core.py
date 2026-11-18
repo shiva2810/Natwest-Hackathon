@@ -98,7 +98,7 @@ def test_llm_failure_falls_back_to_template(tmp_path):
 
 def test_pipeline_runs_through_langgraph(eng):
     run = eng.audit.entries()[0]
-    assert run["data"]["pipeline"] == ["build_graph", "detect_seams", "score", "referee", "propose_drafts"]
+    assert run["data"]["pipeline"] == ["check_departments", "build_graph", "detect_seams", "score", "referee", "propose_drafts"]
     eng.apply_event(Event(type="vendor_change", data={"vendor_id": "v-payflow", "due_diligence": "complete"}))
     assert eng.audit.entries()[-1]["data"]["pipeline"][0] == "apply_event"
 
@@ -144,7 +144,8 @@ def test_agent_drafts_and_human_approval(eng):
     pending = {d.id for d in eng.drafts.values() if d.status == "pending"}
     assert "reassign_owner:orphaned_owner:p-priya" in pending
     # the leaving owner is not notified about her own departure; she gets a reassign draft instead
-    assert len([d for d in pending if d.startswith("notify_owner:")]) == 4
+    # nobody is notified who is leaving: Priya's seams route to her manager, and fixtures have none
+    assert len([d for d in pending if d.startswith("notify_owner:")]) == 3
     maya = SignOff(decision="waive", signer_name="Maya Lin", signer_role="Launch Director", reason="successor agreed")
     eng.sign(SignOff(decision="waive", seam_id="training_lapse:leg-dpo-cert", signer_name="Maya Lin",
                      signer_role="Launch Director", reason="renewal booked"))

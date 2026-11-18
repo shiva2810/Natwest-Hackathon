@@ -6,4 +6,5 @@ httpx
 requests
 langgraph
 streamlit
+anthropic
 pytest

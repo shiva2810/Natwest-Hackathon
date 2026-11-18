@@ -1,10 +1,21 @@
 """API (component X.2). Run: .venv/bin/uvicorn seam.api:app --port 8765
 
+Source: the real dataset in data/ by default (SEAM_DATA to override); set SEAM_RECORDS to a
+records.json to run on fixtures instead.
+LLM: with ANTHROPIC_API_KEY (env or .env) the referee uses Claude, cached in cache/llm/;
+without one it replays the cache and falls back to template text. SEAM_LLM=off forces offline.
+SEAM_LLM_EXTRACT=on also uses Claude for policy-text extraction (default: deterministic).
+
 Endpoints (the Person 2 <-> Person 3 contract):
   GET  /health
-  GET  /passport                    current passport (includes pending drafts and people for pickers)
-  POST /run                         reload records.json and start fresh (also the demo reset)
-  POST /events                      {"type": ..., "data": {...}} -> {"diff", "passport"}
+  GET  /passport                    current passport (departments, seams, drafts, events, scenarios, people)
+  POST /run                         reload the source and start fresh (also the demo reset)
+  GET  /events/stream               Person 1's event stream with applied flags
+  POST /events/stream/{event_id}    apply one event from the stream -> {"diff", "passport"}
+  GET  /scenarios                   what-if scenarios in scenarios/
+  POST /scenarios/{name}            apply one -> {"diff", "passport"}
+  POST /events/custom               apply an ad-hoc event in the stream's file-change format
+  POST /events                      typed event (fixtures mode only)
   POST /signoffs                    {"decision": "go|no_go|waive", "signer_name", "signer_role", "reason", "seam_id"?}
   POST /drafts/{id}/approve         {"signer_name", "signer_role", "reason", "params"?: {"owner_id": ...}}
   POST /drafts/{id}/reject          same body
@@ -25,14 +36,26 @@ from pydantic import BaseModel, ValidationError
 from .engine import Engine
 from .governance import ROOT, GovernanceError, SignOff
 from .pipeline import Event
+from .sources import EventError
 
-RECORDS = Path(os.environ.get("SEAM_RECORDS", ROOT / "fixtures" / "records.json"))
+SOURCE = Path(os.environ.get("SEAM_RECORDS") or os.environ.get("SEAM_DATA") or ROOT / "data")
 AUDIT = Path(os.environ.get("SEAM_AUDIT", ROOT / "runs" / "audit.jsonl"))
 STATE = Path(os.environ.get("SEAM_STATE", ROOT / "runs" / "state.json"))
 
+
+def _llms():
+    if os.environ.get("SEAM_LLM", "on").lower() == "off":
+        return None, None
+    from .claude_provider import default_llm
+    llm = default_llm()                     # live Claude + cache with a key, cache-only without
+    extract = llm if os.environ.get("SEAM_LLM_EXTRACT", "off").lower() == "on" else None
+    return llm, extract
+
+
+LLM, EXTRACT_LLM = _llms()
 app = FastAPI(title="Compliance seam detector")
 lock = threading.Lock()          # one writer at a time: Streamlit reruns can fire overlapping requests
-engine = Engine.open(RECORDS, AUDIT, STATE)
+engine = Engine.open(SOURCE, AUDIT, STATE, llm=LLM, extract_llm=EXTRACT_LLM)
 
 
 class DraftDecision(BaseModel):
@@ -42,19 +65,27 @@ class DraftDecision(BaseModel):
     params: dict[str, Any] | None = None
 
 
+class FileEvent(BaseModel):
+    event_id: str = "custom"
+    date: str | None = None
+    description: str = ""
+    changes: list[dict[str, Any]]
+
+
 def _guard(fn):
     with lock:
         try:
             return fn()
         except GovernanceError as exc:
             raise HTTPException(409, str(exc))
-        except (ValidationError, ValueError, KeyError) as exc:
+        except (ValidationError, ValueError, KeyError, EventError) as exc:
             raise HTTPException(422, str(exc))
 
 
 @app.get("/health")
 def health():
-    return {"ok": True, "service": "seam-detector", "records": str(RECORDS), "seams": len(engine.seams)}
+    return {"ok": True, "service": "seam-detector", "source": str(SOURCE), "seams": len(engine.seams),
+            "llm": "live" if (LLM and LLM.provider) else "cache-only" if LLM else "off"}
 
 
 @app.get("/passport")
@@ -67,14 +98,43 @@ def passport():
 def run():
     def _do():
         global engine
-        fresh = Engine(RECORDS, AUDIT, STATE, llm=engine.llm)   # bad records.json -> 422, old engine kept
+        fresh = Engine(SOURCE, AUDIT, STATE, llm=LLM, extract_llm=EXTRACT_LLM)   # bad source -> 422, old engine kept
         engine = fresh
         return engine.run()
     return _guard(_do)
 
 
+@app.get("/events/stream")
+def stream():
+    with lock:
+        return engine.stream()
+
+
+@app.post("/events/stream/{event_id}")
+def stream_event(event_id: str):
+    return _guard(lambda: engine.apply_stream_event(event_id))
+
+
+@app.get("/scenarios")
+def scenarios():
+    with lock:
+        return engine.scenarios()
+
+
+@app.post("/scenarios/{name}")
+def scenario(name: str):
+    return _guard(lambda: engine.apply_scenario(name))
+
+
+@app.post("/events/custom")
+def custom_event(ev: FileEvent):
+    return _guard(lambda: engine.apply_dataset_event(ev.model_dump(), actor="custom"))
+
+
 @app.post("/events")
 def events(ev: Event):
+    if engine.dataset is not None:
+        raise HTTPException(409, "typed events are for fixtures mode; use /events/stream, /scenarios or /events/custom")
     return _guard(lambda: engine.apply_event(ev))
 
 

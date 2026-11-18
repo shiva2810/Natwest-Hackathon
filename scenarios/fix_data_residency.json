@@ -1,0 +1,4 @@
+{"event_id": "WHATIF-residency", "date": "2026-11-21",
+ "description": "StreamLedger moves QuickPay processing to its Frankfurt region.",
+ "changes": [{"file": "finance/vendors.csv", "op": "update", "match": {"vendor_id": "V002"},
+              "set": {"data_processing_region": "EU-Frankfurt"}}]}

@@ -1,0 +1,7 @@
+{"event_id": "WHATIF-change-control", "date": "2026-11-24",
+ "description": "Product files change control; Legal re-approves QuickPay for v2.0.",
+ "changes": [
+  {"file": "product/product_record.json", "op": "set", "path": "change_control_request_filed", "value": true},
+  {"file": "legal/product_approval.json", "op": "set", "path": "approved_version", "value": "2.0"},
+  {"file": "legal/product_approval.json", "op": "set", "path": "approved_on", "value": "2026-11-24"}
+ ]}

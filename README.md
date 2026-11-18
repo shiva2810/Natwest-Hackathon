@@ -5,17 +5,25 @@ HR, Finance and Legal checkers feed a seam detector that produces a living compl
 ## Run it
 ```
 uv venv .venv && uv pip install --python .venv -r requirements.txt
-.venv/bin/python -m pytest -q                       # 18 tests
-./scripts/run_demo.sh --fresh                       # API :8765 + UI :8501, reset to the planted scenario
+cp .env.example .env                                # paste ANTHROPIC_API_KEY (optional; .env is git-ignored)
+.venv/bin/python -m pytest -q                       # tests (never call a live model)
+.venv/bin/python -m scripts.eval_dataset            # score against data/answer_key: obligations, checks, seams, events
+./scripts/run_demo.sh --fresh                       # API :8765 + UI :8501 on the real dataset, reset
 .venv/bin/python -m scripts.demo_story --pause      # the demo story beat by beat (rehearsal / backup)
+.venv/bin/python -m scripts.warm_llm                # with a key: run everything through Claude once, fill cache/llm/
+.venv/bin/python -m scripts.extract --all-events    # just the extraction -> runs/records.json + report
 ```
+What-if testing: `scenarios/*.json` (same format as the event stream; copy one to make your own),
+applied from the UI, `POST /scenarios/<name>`, or `SeamClient().scenario("<name>")`.
 Two processes, no workers or queues: the full pipeline runs in under a second.
 If the API is down, the UI's `SeamClient` runs the engine in-process on the same state file.
 
 ## How it fits together
 ```
-records.json ──> Engine ──LangGraph──> build_graph → detect_seams → score → referee → propose_drafts
- (Person 1)        │   (events enter via apply_event; only affected nodes are re-checked)
+data/ (Person 1) ──extract──> records + entities ──LangGraph──> check_departments → build_graph
+  CSV/JSON: rules     policy text: clause rules or Claude (quote-checked)   → detect_seams → score
+                                                                            → referee (Claude/templates) → propose_drafts
+events/ + scenarios/ ──> file changes ──> re-extract ──> selective re-check (verified against a full re-check)
                    ├── governance: tiers, named sign-off, drafts, hash-chained audit (runs/audit.jsonl)
                    ├── state saved after every change (runs/state.json) — survives restarts
                    └── FastAPI (:8765) ──> SeamClient ──> Streamlit UI (:8501, Person 3)

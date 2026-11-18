@@ -1,0 +1,8 @@
+{"event_id": "WHATIF-new-seller", "date": "2026-11-23",
+ "description": "A new sales executive joins QuickPay sales from launch day without PCT-101.",
+ "changes": [
+  {"file": "hr/roster.csv", "op": "insert", "row": {"employee_id": "E032", "full_name": "Vera Lund", "department": "Sales", "job_title": "Sales Executive", "manager_id": "E006", "status": "active", "last_working_day": "", "leaver_checklist": "NA", "location": "London"}},
+  {"file": "hr/product_staffing.csv", "op": "insert", "row": {"employee_id": "E032", "product": "QuickPay", "role_on_product": "Sales Executive", "allocation_pct": "100", "can_sell_or_onboard": "Y", "selling_from": "2026-12-01"}},
+  {"file": "hr/training_records.csv", "op": "insert", "row": {"employee_id": "E032", "course_code": "COC-100", "status": "valid", "completed_date": "2026-11-23", "expiry_date": "2027-11-23"}},
+  {"file": "hr/training_records.csv", "op": "insert", "row": {"employee_id": "E032", "course_code": "DPA-110", "status": "valid", "completed_date": "2026-11-23", "expiry_date": "2027-11-23"}}
+ ]}

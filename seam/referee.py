@@ -14,16 +14,16 @@ from .rules import Seam
 
 TEMPLATES = {
     "orphaned_owner": (
-        "{person} ({role}) is named as owner of: {obligation_list}. HR records show they leave on "
-        "{leaving_on}, before the {launch_date} launch. No one else is named, so these obligations will "
-        "have no accountable owner on launch day.",
+        "{person} ({role}) leaves on {leaving_on}, before the {launch_date} launch, but other departments "
+        "still rely on them: {role_list}. HR sees a normal leaver; Legal and Finance each see a valid named "
+        "person. On launch day these roles will have nobody behind them.",
         ["Name a successor owner for each obligation and record the handover",
          "Ask HR to confirm a backfill before launch",
          "Delay launch until owners are reassigned"],
     ),
     "version_drift": (
         "Legal's product approval covers {product} v{approved_version}, but the launch ships "
-        "v{launch_version}. The approval does not cover what customers will receive.",
+        "v{launch_version}{changes_clause}. The approval does not cover what customers will receive.",
         ["Submit v{launch_version} to the product approval committee",
          "Launch v{approved_version} instead",
          "Get Legal to confirm in writing that the changes are out of scope"],
@@ -50,6 +50,29 @@ TEMPLATES = {
          "Reduce the contract value to within the limit",
          "Raise the signer's limit through Finance governance"],
     ),
+    "seller_training_gap": (
+        "Legal's rule says only staff with valid {course} may sell. HR's records show: {seller_list}. "
+        "HR's mandatory list does not include {course}, and Legal does not hold the training records, "
+        "so neither department sees it.",
+        ["Book the listed sellers on {course} before their first sale",
+         "Keep them off sales and onboarding until trained",
+         "Add {course} to HR's mandatory list for anyone who can sell"],
+    ),
+    "data_residency_breach": (
+        "The customer terms promise processing only in {region_list}, but {breach_list}. Finance records "
+        "the region, Legal records the promise and a signed DPA - neither sees both.",
+        ["Move processing to a UK/EEA region before launch",
+         "Remove the supplier from the v2.0 data flows",
+         "Amend the customer terms and notify customers (needs Legal sign-off)"],
+    ),
+    "support_capacity_gap": (
+        "The terms promise {required_hours_per_week:.0f} staffed support hours a week, but {agents} agents "
+        "cover {staffed_hours_per_week:.0f} ({gap_hours:.0f} short). Budget: {budget_list}. "
+        "Hiring frozen until {hiring_frozen_until}.",
+        ["Get a hiring-freeze exception from the COO and Head of Finance",
+         "Contract an out-of-hours support provider",
+         "Delay the Premium tier until support is staffed"],
+    ),
     "unbudgeted_contract": (
         "'{contract}' commits £{value:,.0f}, but Finance has only £{budgeted:,.0f} budgeted against it.",
         ["Add a budget line before spend", "Renegotiate the contract value"],
@@ -57,10 +80,20 @@ TEMPLATES = {
 }
 
 
+VOLATILE = {"score_reasons", "explained_by", "referee_error"}
+
+
 def _template(seam: Seam) -> tuple[str, list[str]]:
     text, fixes = TEMPLATES.get(seam.type, ("{title}", ["Review manually"]))
     facts = {**seam.facts, "title": seam.title}
     facts.setdefault("obligation_list", "; ".join(seam.facts.get("obligations", [])))
+    facts.setdefault("role_list", "; ".join(seam.facts.get("roles", [])) or facts["obligation_list"])
+    facts.setdefault("seller_list", "; ".join(seam.facts.get("sellers_without_valid_training", [])))
+    facts.setdefault("breach_list", "; ".join(seam.facts.get("breaches", [])))
+    facts.setdefault("region_list", "/".join(seam.facts.get("allowed_regions", [])))
+    facts.setdefault("budget_list", "; ".join(seam.facts.get("budget_coverage", [])) or "no line found")
+    mc = seam.facts.get("material_changes") or []
+    facts.setdefault("changes_clause", f" with {len(mc)} material changes ({'; '.join(mc)})" if mc else "")
 
     class _Safe(dict):
         def __missing__(self, k):
@@ -75,11 +108,13 @@ def explain(seam: Seam, llm: Callable[[str], dict] | None = None) -> Seam:
     explanation, fixes = _template(seam)
     seam.facts["explained_by"] = "template"
     if llm is not None:
+        # leave out values that change between runs (scoring, previous referee notes) so cache keys stay stable
+        stable = {k: v for k, v in seam.facts.items() if k not in VOLATILE}
         prompt = (
             "You are a compliance referee. Explain this cross-department gap to a launch manager in 2-3 "
             "plain sentences and give 2-3 concrete fix options. Use ONLY these facts; do not invent any.\n"
             f"Seam type: {seam.type}\nTitle: {seam.title}\nDepartments: {', '.join(seam.departments)}\n"
-            f"Facts: {json.dumps(seam.facts, default=str)}\n"
+            f"Facts: {json.dumps(stable, sort_keys=True, default=str)}\n"
             'Return JSON: {"explanation": str, "fix_options": [str]}'
         )
         try:

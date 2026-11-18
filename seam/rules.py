@@ -34,6 +34,8 @@ class Seam(BaseModel):
     fix_options: list[str] = Field(default_factory=list)
     status: Literal["open", "waived"] = "open"
     waiver: dict[str, Any] | None = None
+    basis: list[str] = Field(default_factory=list)   # EU law vs internal policy (never present policy as law)
+    blocks_launch: bool = True                        # False: fix before the gap bites, launch can proceed
 
 
 def _product(bundle: Bundle):
@@ -43,34 +45,87 @@ def _product(bundle: Bundle):
 # ---------- the five seam types ----------
 
 def orphaned_owner(g: nx.MultiDiGraph, b: Bundle) -> list[Seam]:
-    """Legal/Finance name an owner whom HR shows inactive or leaving before launch."""
+    """S1. Someone HR shows leaving before launch still holds roles other departments rely on:
+    obligations they own (Legal/Finance), accountable senior manager on the approval, product owner,
+    pending purchase orders routed to them, or sole approver for a spending scope (Finance)."""
     launch = _product(b).launch_date
+    people = {p.id: p for p in b.entities.people}
+
+    def gone(pid: str | None) -> bool:
+        p = people.get(pid or "")
+        return p is not None and (not p.active or (p.leaving_on is not None and p.leaving_on <= launch))
+
     out = []
     for pid, person in nodes_of(g, "person"):
-        gone = not person.active or (person.leaving_on and person.leaving_on <= launch)
-        if not gone:
+        if not gone(pid):
             continue
-        owned = [(rid, r) for rid, r in neighbours(g, pid, "owned_by", incoming=True)
-                 if r.department != "HR"]          # HR already sees its own roster
-        if not owned:
+        roles: list[str] = []
+        nodes: list[str] = [pid]
+        depts = {"HR"}
+        owned = [(rid, r) for rid, r in neighbours(g, pid, "owned_by", incoming=True) if r.department != "HR"]
+        for rid, r in owned:
+            roles.append(f"owner of {rid}: {r.description[:70]}")
+            nodes.append(rid)
+            depts.add(r.department)
+        for prid, pr in neighbours(g, pid, "asm", incoming=True):
+            roles.append(f"accountable senior manager on approval {pr.approval.id if pr.approval else ''} for {pr.name}")
+            nodes.append(prid); depts.add("Legal")
+        for prid, pr in neighbours(g, pid, "product_owner", incoming=True):
+            roles.append(f"product owner of {pr.name}")
+            nodes.append(prid); depts.add("Product")
+        for poid, po in neighbours(g, pid, "approver", incoming=True):
+            if g.nodes[poid]["type"] == "purchase_order" and po.status == "pending_approval":
+                roles.append(f"approver of pending {poid} ({po.amount:,.0f}, {po.description})")
+                nodes.append(poid); depts.add("Finance")
+            elif g.nodes[poid]["type"] == "approval_limit":
+                al = po
+                if al.valid_to is not None and al.valid_to < launch:
+                    continue
+                others = [x for x in b.entities.approval_limits if x.scope == al.scope and x.approver_id != pid
+                          and not gone(x.approver_id) and (x.valid_from is None or x.valid_from <= launch)]
+                delegate_ok = al.delegate_id is not None and not gone(al.delegate_id)
+                if not others and not delegate_ok:
+                    roles.append(f"sole approver for '{al.scope}' (limit {al.limit:,.0f}, no delegate)")
+                    nodes.append(poid); depts.add("Finance")
+        if not roles:
             continue
-        depts = sorted({"HR", *(r.department for _, r in owned)})
+        when = "is no longer active" if not person.active else f"leaves on {person.leaving_on}"
         out.append(Seam(
             id=f"orphaned_owner:{pid}", type="orphaned_owner", anchor=pid,
-            title=f"{person.name} owns {len(owned)} obligation(s) but "
-                  + ("is no longer active" if not person.active else f"leaves on {person.leaving_on}"),
-            departments=depts, nodes=[pid, *(rid for rid, _ in owned)],
-            record_ids=[rid for rid, _ in owned], effective_on=person.leaving_on,
-            facts={"person": person.name, "role": person.role, "active": person.active,
-                   "leaving_on": str(person.leaving_on), "launch_date": str(launch),
-                   "obligations": [r.description for _, r in owned]},
+            title=f"{person.name} {when} but still holds {len(roles)} role(s) needed at launch",
+            departments=sorted(depts), nodes=nodes, record_ids=[rid for rid, _ in owned],
+            effective_on=person.leaving_on, facts={
+                "person": person.name, "role": person.role, "active": person.active,
+                "leaving_on": str(person.leaving_on), "launch_date": str(launch), "roles": roles,
+                "obligations": [r.description for _, r in owned]},
         ))
     return out
 
 
 def version_drift(g: nx.MultiDiGraph, b: Bundle) -> list[Seam]:
-    """Legal approved one product version; the launch ships another."""
+    """S5. Legal approved one product version; the launch ships another (with material changes)."""
     out = []
+    for prid, prod in nodes_of(g, "product"):
+        ap = prod.approval
+        if ap is None or ap.approved_version == prod.launch_version:
+            continue
+        material = [c for c in prod.changes if c.material]
+        anchor_rec = next((rid for rid, r in nodes_of(g, "obligation") if r.kind == "approval"
+                           and r.product_id == prid), None)
+        cc = [rid for rid, r in nodes_of(g, "obligation") if r.kind == "change_control"]
+        out.append(Seam(
+            id=f"version_drift:{anchor_rec or prid}", type="version_drift", anchor=anchor_rec or prid,
+            title=f"Approval {ap.id} covers v{ap.approved_version} but {prod.name} launches v{prod.launch_version} "
+                  f"with {len(material)} material change(s)"
+                  + ("" if prod.change_control_filed else " and no change control request"),
+            departments=["Legal", "Product"], nodes=[prid, *(x for x in [anchor_rec] if x), *cc],
+            record_ids=[x for x in [anchor_rec, *cc] if x], fix_owner_id=ap.accountable_senior_manager_id,
+            effective_on=prod.launch_date,
+            facts={"approved_version": ap.approved_version, "launch_version": prod.launch_version,
+                   "product": prod.name, "approval_id": ap.id, "approval_valid_until": str(ap.valid_until),
+                   "material_changes": [f"{c.id} {c.description} ({c.change_type})" for c in material],
+                   "change_control_filed": prod.change_control_filed},
+        ))
     for rid, r in nodes_of(g, "obligation"):
         if r.kind != "product_approval" or not r.product_id or r.product_id not in g:
             continue
@@ -184,20 +239,155 @@ def unbudgeted_contract(g: nx.MultiDiGraph, b: Bundle) -> list[Seam]:
     return out
 
 
+def _sale_date(prod, staffing) -> date:
+    return staffing.selling_from or prod.first_sales_date or prod.launch_date
+
+
+def seller_training_gap(g: nx.MultiDiGraph, b: Bundle) -> list[Seam]:
+    """S2. Legal requires sellers to hold a course on the date of sale; HR's records show sellers who won't."""
+    out = []
+    people = {p.id: p for p in b.entities.people}
+    for rid, r in nodes_of(g, "obligation"):
+        if r.kind != "training" or not r.attributes.get("course"):
+            continue
+        course = r.attributes["course"]
+        prod = g.nodes[r.product_id]["obj"] if r.product_id in g else _product(b)
+        gaps, nodes = [], [rid, prod.id]
+        for s in b.entities.staffing:
+            if s.product != prod.name or not s.can_sell or s.person_id not in people:
+                continue
+            p, day = people[s.person_id], _sale_date(prod, s)
+            held = [t for t in p.trainings if t.course == course]
+            ok = any(t.completed_on and t.status != "not_started" and (t.expires_on is None or t.expires_on > day)
+                     for t in held)
+            if ok:
+                continue
+            why = ("not started" if not held or all(t.status == "not_started" for t in held)
+                   else f"expires {max((t.expires_on for t in held if t.expires_on), default=None)}")
+            gaps.append(f"{p.id} {p.name}: {course} {why}, first sale {day}")
+            nodes.append(p.id)
+        if gaps:
+            out.append(Seam(
+                id=f"seller_training_gap:{rid}", type="seller_training_gap", anchor=rid,
+                title=f"{len(gaps)} seller(s) will not hold valid {course} on their first sales date",
+                departments=["HR", "Legal"], nodes=nodes, record_ids=[rid], fix_owner_id=r.owner_id,
+                effective_on=min((_sale_date(prod, s) for s in b.entities.staffing if s.can_sell), default=prod.launch_date),
+                facts={"course": course, "requirement": r.description, "sellers_without_valid_training": gaps,
+                       "hr_mandatory_list_includes_course": False},
+            ))
+    return out
+
+
+REGION_GROUP = {"UK": "UK", "EU": "EEA", "EEA": "EEA"}
+
+
+def data_residency_breach(g: nx.MultiDiGraph, b: Bundle) -> list[Seam]:
+    """S3. Customer terms promise processing only in allowed regions; Finance's vendor master shows
+    a supplier in the product's data flows processing elsewhere. Legal sees only a signed DPA."""
+    out = []
+    contracts_by_vendor: dict[str, list] = {}
+    for c in b.entities.contracts:
+        contracts_by_vendor.setdefault(c.vendor_id, []).append(c)
+    for rid, r in nodes_of(g, "obligation"):
+        if r.kind != "data_residency":
+            continue
+        allowed = r.attributes.get("allowed_regions") or []
+        allowed = [allowed] if isinstance(allowed, str) else allowed
+        prod = g.nodes[r.product_id]["obj"] if r.product_id in g else _product(b)
+        breaches, nodes = [], [rid, prod.id]
+        for f in prod.data_flows:
+            v = g.nodes[f.vendor_id]["obj"] if f.vendor_id in g else None
+            if v is None:
+                continue
+            group = REGION_GROUP.get((v.processing_region or "").split("-")[0].upper())
+            if group in allowed:
+                continue
+            dpa = [f"{c.id} DPA signed={c.dpa_signed}" for c in contracts_by_vendor.get(v.id, [])]
+            breaches.append(f"{v.id} {v.name}: {f.data_category} processed in {v.processing_region} "
+                            f"({v.country}); {', '.join(dpa) or 'no contract'}")
+            nodes.append(v.id)
+        if breaches:
+            out.append(Seam(
+                id=f"data_residency_breach:{rid}", type="data_residency_breach", anchor=rid,
+                title=f"{len(breaches)} supplier(s) process customer data outside {'/'.join(allowed)}, "
+                      "against the customer terms",
+                departments=["Finance", "Legal", "Product"], nodes=nodes, record_ids=[rid], fix_owner_id=r.owner_id,
+                effective_on=prod.launch_date,
+                facts={"promise": r.description, "allowed_regions": allowed, "breaches": breaches}))
+    return out
+
+
+def support_capacity_gap(g: nx.MultiDiGraph, b: Bundle) -> list[Seam]:
+    """S4. Legal promises a staffed service level; HR's staffing and Finance's budget cover fewer hours,
+    and a hiring freeze stops the gap closing before launch."""
+    out = []
+    e = b.entities
+    hours = {h.department: h for h in e.headcount}
+    people = {p.id: p for p in e.people}
+    for rid, r in nodes_of(g, "obligation"):
+        if r.kind != "service_level" or not r.attributes.get("min_hours_per_week"):
+            continue
+        need = float(r.attributes["min_hours_per_week"])
+        prod = g.nodes[r.product_id]["obj"] if r.product_id in g else _product(b)
+        agents = [s for s in e.staffing if s.product == prod.name and "support agent" in s.role.lower()
+                  and s.person_id in people and people[s.person_id].active]
+        have = sum(s.allocation_pct / 100 * hours.get(people[s.person_id].department,
+                   type("H", (), {"weekly_hours_per_head": 40})).weekly_hours_per_head for s in agents)
+        if have >= need:
+            continue
+        lines = [bl for bl in e.budget_lines if bl.product == prod.name and "support" in bl.line_item.lower()
+                 and bl.category == "people"]
+        dept = people[agents[0].person_id].department if agents else "Support"
+        plan = hours.get(dept)
+        frozen = plan is not None and plan.hiring_status == "frozen" and plan.frozen_until and plan.frozen_until > prod.launch_date
+        out.append(Seam(
+            id=f"support_capacity_gap:{rid}", type="support_capacity_gap", anchor=rid,
+            title=f"Promised {need:.0f} staffed hours/week but staffing covers {have:.0f}"
+                  + (f"; {dept} hiring frozen until {plan.frozen_until}" if frozen else ""),
+            departments=["Finance", "HR", "Legal"],
+            nodes=[rid, prod.id, *(bl.id for bl in lines), *([f"dept:{dept}"] if plan else []),
+                   *(s.person_id for s in agents)],
+            record_ids=[rid], fix_owner_id=r.owner_id, effective_on=r.applies_from or prod.launch_date,
+            facts={"promise": r.description, "required_hours_per_week": need, "staffed_hours_per_week": have,
+                   "gap_hours": need - have, "agents": len(agents),
+                   "budget_coverage": [f"{bl.id} {bl.line_item}: {bl.coverage_notes}" for bl in lines],
+                   "hiring_frozen_until": str(plan.frozen_until) if frozen else None}))
+    return out
+
+
+BASIS = {
+    "orphaned_owner": ["EU law: GDPR Art. 5(2) accountability; DORA Art. 5",
+                       "Internal policy: HR 6.2 leaver handover; Finance 3.3 ASM approval"],
+    "seller_training_gap": ["Internal policy: Conduct Policy 5.3 (PCT-101 on date of sale)",
+                            "EU law: GDPR Art. 39(1)(b) staff training"],
+    "data_residency_breach": ["Contract: Customer Terms v2.0 clause 7.2 (UK/EEA only)",
+                              "EU law: GDPR Ch. V transfers; DORA Art. 30(2)(b) processing locations"],
+    "support_capacity_gap": ["Contract: Customer Terms v2.0 clause 9.1 (24x7, two agents)",
+                             "EU law: Working Time Directive 2003/88/EC"],
+    "version_drift": ["Internal policy: Product Change Control Policy 2",
+                      "EU law: DORA Art. 9 ICT change management"],
+}
+
+
 RULES: dict[str, Callable[[nx.MultiDiGraph, Bundle], list[Seam]]] = {
     "orphaned_owner": orphaned_owner,
     "version_drift": version_drift,
+    "seller_training_gap": seller_training_gap,
+    "data_residency_breach": data_residency_breach,
+    "support_capacity_gap": support_capacity_gap,
     "unvetted_vendor": unvetted_vendor,
     "training_lapse": training_lapse,
     "approval_limit_breach": approval_limit_breach,
     "unbudgeted_contract": unbudgeted_contract,
 }
-RULES_VERSION = "rules-2026.11.18-a"
+RULES_VERSION = "rules-2026.11.18-b"
 
 
 def detect(g: nx.MultiDiGraph, b: Bundle, scope: set[str] | None = None) -> list[Seam]:
     """Run every rule. With `scope`, keep only seams touching those nodes (selective re-check)."""
     seams = [s for rule in RULES.values() for s in rule(g, b)]
+    for s in seams:
+        s.basis = s.basis or BASIS.get(s.type, [])
     if scope is not None:
         seams = [s for s in seams if scope & set(s.nodes)]
     return seams

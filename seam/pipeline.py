@@ -1,7 +1,12 @@
 """LangGraph pipeline: the agent workflow behind every run and every event.
 
     START ─┬─(event?)─> apply_event ─┐
-           └──────────────────────────┴─> build_graph -> detect_seams -> score -> referee -> propose_drafts -> END
+           └──────────────────────────┴─> check_departments -> build_graph -> detect_seams -> score
+                                                                 -> referee -> propose_drafts -> END
+
+check_departments runs the layer-3 checkers (each department on its own data only).
+Dataset events (Person 1's event stream) are applied to raw files by the Engine, which re-extracts
+and then invokes this pipeline with `changed` + `g_before` set, so the same selective re-check applies.
 
 A full run has no event and no scope. An event run mutates the bundle, works out which graph nodes
 are affected, and re-checks only those (selective re-check). The pipeline is stateless: the Engine
@@ -16,6 +21,7 @@ import networkx as nx
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel
 
+from .checkers import run_checks
 from .governance import TierPolicy
 from .graph import affected_nodes, build_graph
 from .referee import explain
@@ -53,6 +59,7 @@ class PipelineState(TypedDict, total=False):
     seams: list[Seam]
     drafts: list[Draft]
     trace: list[str]                          # node names in order, for the audit log
+    dept_summary: dict
 
 
 # ---------- event mutations ----------
@@ -123,11 +130,14 @@ def make_pipeline(policy: TierPolicy, llm: Callable[[str], dict] | None = None):
         changed = mutate(b, state["event"])
         return {"changed": changed, "g_before": g_before, "trace": _t(state, "apply_event")}
 
-    def build(state: PipelineState) -> PipelineState:
+    def check_departments(state: PipelineState) -> PipelineState:
         policy.enforce("run_checks", "agent")
+        return {"dept_summary": run_checks(state["bundle"]), "trace": _t(state, "check_departments")}
+
+    def build(state: PipelineState) -> PipelineState:
         g = build_graph(state["bundle"])
         scope = None
-        if state.get("event") is not None:
+        if state.get("changed") is not None and state.get("g_before") is not None:
             ch = state["changed"]
             scope = affected_nodes(state["g_before"], ch) | affected_nodes(g, ch)
         return {"graph": g, "scope": scope, "trace": _t(state, "build_graph")}
@@ -143,17 +153,31 @@ def make_pipeline(policy: TierPolicy, llm: Callable[[str], dict] | None = None):
 
     def referee(state: PipelineState) -> PipelineState:
         policy.enforce("explain_seam", "agent")
-        return {"seams": [explain(s, llm) for s in state["seams"]], "trace": _t(state, "referee")}
+        seams = state["seams"]
+        if llm is not None and len(seams) > 1:   # live LLM: explain seams in parallel
+            from concurrent.futures import ThreadPoolExecutor
+            with ThreadPoolExecutor(max_workers=min(6, len(seams))) as pool:
+                seams = list(pool.map(lambda s: explain(s, llm), seams))
+        else:
+            seams = [explain(s, llm) for s in seams]
+        return {"seams": seams, "trace": _t(state, "referee")}
 
     def propose_drafts(state: PipelineState) -> PipelineState:
-        people = {p.id: p for p in state["bundle"].entities.people}
+        b = state["bundle"]
+        people = {p.id: p for p in b.entities.people}
+        launch = next(p for p in b.entities.products if p.id == b.scenario.product_id).launch_date
         drafts = []
         for s in state["seams"]:
             owner = people.get(s.fix_owner_id or "")
+            note = ""
+            if owner and (not owner.active or (owner.leaving_on and owner.leaving_on <= launch)):
+                manager = people.get(owner.manager_id or "")   # never route a fix to someone who is leaving
+                note = f" (owner {owner.name} leaves {owner.leaving_on}; routed to their manager)"
+                owner = manager
             if owner and policy.enforce("notify_owner", "agent") == "draft":
                 drafts.append(Draft(
                     id=f"notify_owner:{s.id}", action="notify_owner", seam_id=s.id,
-                    summary=f"Notify {owner.name} ({owner.role}): {s.title}",
+                    summary=f"Notify {owner.name} ({owner.role}): {s.title}{note}",
                     params={"to": owner.id, "message": s.explanation}))
             if s.type == "orphaned_owner" and policy.enforce("reassign_owner", "agent") == "draft":
                 drafts.append(Draft(
@@ -165,14 +189,16 @@ def make_pipeline(policy: TierPolicy, llm: Callable[[str], dict] | None = None):
 
     sg = StateGraph(PipelineState)
     sg.add_node("apply_event", apply_event)
+    sg.add_node("check_departments", check_departments)
     sg.add_node("build_graph", build)
     sg.add_node("detect_seams", detect_seams)
     sg.add_node("score", score)
     sg.add_node("referee", referee)
     sg.add_node("propose_drafts", propose_drafts)
-    sg.add_conditional_edges(START, lambda s: "apply_event" if s.get("event") else "build_graph",
-                             ["apply_event", "build_graph"])
-    sg.add_edge("apply_event", "build_graph")
+    sg.add_conditional_edges(START, lambda s: "apply_event" if s.get("event") else "check_departments",
+                             ["apply_event", "check_departments"])
+    sg.add_edge("apply_event", "check_departments")
+    sg.add_edge("check_departments", "build_graph")
     sg.add_edge("build_graph", "detect_seams")
     sg.add_edge("detect_seams", "score")
     sg.add_edge("score", "referee")

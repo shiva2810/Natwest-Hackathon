@@ -1,0 +1,18 @@
+{"event_id": "WHATIF-support", "date": "2026-11-22",
+ "description": "COO and Head of Finance approve a freeze exception; three support agents join QuickPay.",
+ "changes": [
+  {"file": "hr/headcount_plan.csv", "op": "update", "match": {"department": "Support"},
+   "set": {"approved_heads": "10", "filled_heads": "10", "hiring_status": "open", "frozen_until": "", "notes": "Freeze exception approved 2026-11-22"}},
+  {"file": "hr/roster.csv", "op": "insert", "row": {"employee_id": "E029", "full_name": "Sam Okoro", "department": "Support", "job_title": "Support Agent", "manager_id": "E007", "status": "active", "last_working_day": "", "leaver_checklist": "NA", "location": "Edinburgh"}},
+  {"file": "hr/roster.csv", "op": "insert", "row": {"employee_id": "E030", "full_name": "Tara Quinn", "department": "Support", "job_title": "Support Agent", "manager_id": "E007", "status": "active", "last_working_day": "", "leaver_checklist": "NA", "location": "Glasgow"}},
+  {"file": "hr/roster.csv", "op": "insert", "row": {"employee_id": "E031", "full_name": "Umar Riaz", "department": "Support", "job_title": "Support Agent", "manager_id": "E007", "status": "active", "last_working_day": "", "leaver_checklist": "NA", "location": "Glasgow"}},
+  {"file": "hr/product_staffing.csv", "op": "insert", "row": {"employee_id": "E029", "product": "QuickPay", "role_on_product": "Support Agent", "allocation_pct": "100", "can_sell_or_onboard": "N", "selling_from": ""}},
+  {"file": "hr/product_staffing.csv", "op": "insert", "row": {"employee_id": "E030", "product": "QuickPay", "role_on_product": "Support Agent", "allocation_pct": "100", "can_sell_or_onboard": "N", "selling_from": ""}},
+  {"file": "hr/product_staffing.csv", "op": "insert", "row": {"employee_id": "E031", "product": "QuickPay", "role_on_product": "Support Agent", "allocation_pct": "100", "can_sell_or_onboard": "N", "selling_from": ""}},
+  {"file": "hr/training_records.csv", "op": "insert", "row": {"employee_id": "E029", "course_code": "COC-100", "status": "valid", "completed_date": "2026-11-22", "expiry_date": "2027-11-22"}},
+  {"file": "hr/training_records.csv", "op": "insert", "row": {"employee_id": "E029", "course_code": "DPA-110", "status": "valid", "completed_date": "2026-11-22", "expiry_date": "2027-11-22"}},
+  {"file": "hr/training_records.csv", "op": "insert", "row": {"employee_id": "E030", "course_code": "COC-100", "status": "valid", "completed_date": "2026-11-22", "expiry_date": "2027-11-22"}},
+  {"file": "hr/training_records.csv", "op": "insert", "row": {"employee_id": "E030", "course_code": "DPA-110", "status": "valid", "completed_date": "2026-11-22", "expiry_date": "2027-11-22"}},
+  {"file": "hr/training_records.csv", "op": "insert", "row": {"employee_id": "E031", "course_code": "COC-100", "status": "valid", "completed_date": "2026-11-22", "expiry_date": "2027-11-22"}},
+  {"file": "hr/training_records.csv", "op": "insert", "row": {"employee_id": "E031", "course_code": "DPA-110", "status": "valid", "completed_date": "2026-11-22", "expiry_date": "2027-11-22"}}
+ ]}

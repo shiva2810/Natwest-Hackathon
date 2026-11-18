@@ -1,0 +1,4 @@
+{"event_id": "WHATIF-gc-resigns", "date": "2026-11-20",
+ "description": "General Counsel Sofia Marchetti (E003) resigns; last working day 2026-11-28.",
+ "changes": [{"file": "hr/roster.csv", "op": "update", "match": {"employee_id": "E003"},
+              "set": {"status": "serving_notice", "last_working_day": "2026-11-28", "leaver_checklist": "initiated"}}]}

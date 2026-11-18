@@ -1,11 +1,13 @@
 """Engine: owns state, runs the LangGraph pipeline, enforces governance, builds passport.json.
 
-State (bundle after events, seams, waivers, sign-off, drafts, history) is saved to runs/state.json
-after every change, so an API restart mid-demo loses nothing. If records.json changes on disk
-(Person 1 publishes new data), the saved state is discarded and a fresh run happens.
+Two sources:
+  - a data directory (the real dataset, data/): extract -> check -> detect. Events are file-level
+    changes (Person 1's event stream, or custom what-if scenarios in the same format) applied to the
+    raw files, then re-extracted and selectively re-checked.
+  - a records.json file (fixtures): typed events mutate the bundle directly.
 
-Person 3 owns the passport UI and may refine the roll-up (6.1); the shape of `passport()` is the
-Person 2 -> Person 3 handoff, so change keys together.
+State is saved to runs/state.json after every change, so an API restart mid-demo loses nothing.
+If the source changes on disk, saved state is discarded and a fresh run happens.
 """
 from __future__ import annotations
 
@@ -16,46 +18,69 @@ from pathlib import Path
 from typing import Any, Callable, Literal
 
 from .governance import ROOT, AuditLog, GovernanceError, SignOff, TierPolicy, now
+from .graph import build_graph
 from .pipeline import Draft, Event, make_pipeline
-from .rules import RULES_VERSION, Seam
+from .rules import RULES_VERSION, Seam, detect
 from .schema import Bundle
+from .scoring import rank
+from .sources import Dataset, EventError, apply_event as apply_file_event, load_dataset
 
 Go = Literal["go", "conditional", "no_go"]
 ORDER = {"go": 0, "conditional": 1, "no_go": 2}
-STATE_VERSION = 1
+STATE_VERSION = 2
+DOC_PATH_TO_PRODUCT = {"accountable_senior_manager", "product_owner", "data_flows", "changes",
+                       "release_candidate", "approved_version", "change_control_request_filed"}
 
 
-def _sha(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+def source_sha(path: Path) -> str:
+    h = hashlib.sha256()
+    files = sorted(p for p in path.rglob("*") if p.is_file() and "answer_key" not in p.parts) if path.is_dir() else [path]
+    for f in files:
+        h.update(str(f.relative_to(path) if path.is_dir() else f.name).encode())
+        h.update(f.read_bytes())
+    return h.hexdigest()
 
 
 class Engine:
-    def __init__(self, records_path: Path, audit_path: Path | None = None,
-                 state_path: Path | None = None, llm: Callable[[str], dict] | None = None):
-        self.records_path = Path(records_path)
-        self.bundle = Bundle.model_validate_json(self.records_path.read_text())  # raises on bad data
+    def __init__(self, source: Path, audit_path: Path | None = None, state_path: Path | None = None,
+                 llm: Callable[[str], str] | None = None, extract_llm: Callable[[str], str] | None = None):
+        self.source = Path(source)
+        self.records_path = self.source            # kept for older callers
+        self.llm, self.extract_llm = llm, extract_llm
+        self.dataset: Dataset | None = None
+        self.extraction_report: dict[str, Any] = {}
+        if self.source.is_dir():
+            self.dataset = load_dataset(self.source)
+            self.bundle = self._extract(self.dataset)
+        else:
+            self.bundle = Bundle.model_validate_json(self.source.read_text())  # raises on bad data
         self.policy = TierPolicy()
         self.audit = AuditLog(audit_path or ROOT / "runs" / "audit.jsonl")
         self.state_path = state_path or ROOT / "runs" / "state.json"
-        self.llm = llm
         self.pipeline = make_pipeline(self.policy, llm)
         self.seams: dict[str, Seam] = {}
         self.drafts: dict[str, Draft] = {}
         self.signoff: dict[str, Any] = {"state": "pending"}
         self.last_verified: str | None = None
+        self.dept_summary: dict[str, Any] = {}
         self.history: list[dict[str, Any]] = []      # before/after snapshots for the diff view (6.4)
+
+    def _extract(self, ds: Dataset) -> Bundle:
+        from .extract import build_bundle
+        bundle, self.extraction_report = build_bundle(ds, llm=self.extract_llm)
+        return bundle
 
     # ---------- persistence ----------
 
     @classmethod
-    def open(cls, records_path: Path, audit_path: Path | None = None, state_path: Path | None = None,
-             llm: Callable[[str], dict] | None = None) -> "Engine":
-        """Resume saved state if it belongs to this exact records.json, else start with a fresh run."""
-        eng = cls(records_path, audit_path, state_path, llm)
+    def open(cls, source: Path, audit_path: Path | None = None, state_path: Path | None = None,
+             llm=None, extract_llm=None) -> "Engine":
+        """Resume saved state if it belongs to this exact source, else start with a fresh run."""
+        eng = cls(source, audit_path, state_path, llm, extract_llm)
         if eng.state_path.exists():
             try:
                 saved = json.loads(eng.state_path.read_text())
-                if saved.get("version") == STATE_VERSION and saved.get("records_sha") == _sha(eng.records_path):
+                if saved.get("version") == STATE_VERSION and saved.get("source_sha") == source_sha(eng.source):
                     eng._load(saved)
                     return eng
             except (ValueError, KeyError):
@@ -65,19 +90,27 @@ class Engine:
 
     def _load(self, s: dict[str, Any]):
         self.bundle = Bundle.model_validate(s["bundle"])
+        if self.dataset is not None and s.get("dataset"):
+            d = s["dataset"]
+            self.dataset.tables, self.dataset.docs = d["tables"], d["docs"]
+            self.dataset.as_of, self.dataset.applied = d["as_of"], d["applied"]
         self.seams = {k: Seam.model_validate(v) for k, v in s["seams"].items()}
         self.drafts = {k: Draft.model_validate(v) for k, v in s["drafts"].items()}
         self.signoff, self.history, self.last_verified = s["signoff"], s["history"], s["last_verified"]
+        self.dept_summary = s.get("dept_summary", {})
 
     def save(self):
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.state_path.with_suffix(".tmp")
+        ds = self.dataset
         tmp.write_text(json.dumps({
-            "version": STATE_VERSION, "records_sha": _sha(self.records_path),
+            "version": STATE_VERSION, "source_sha": source_sha(self.source),
             "bundle": self.bundle.model_dump(mode="json"),
+            "dataset": {"tables": ds.tables, "docs": ds.docs, "as_of": ds.as_of, "applied": ds.applied} if ds else None,
             "seams": {k: v.model_dump(mode="json") for k, v in self.seams.items()},
             "drafts": {k: v.model_dump(mode="json") for k, v in self.drafts.items()},
             "signoff": self.signoff, "history": self.history, "last_verified": self.last_verified,
+            "dept_summary": self.dept_summary,
         }, default=str))
         tmp.replace(self.state_path)   # atomic: a crash mid-write never leaves half a file
 
@@ -103,51 +136,130 @@ class Engine:
     # ---------- runs ----------
 
     def run(self) -> dict[str, Any]:
+        if self.dataset is not None:                      # fresh run = original files, no events
+            self.dataset = load_dataset(self.source)
+            self.bundle = self._extract(self.dataset)
         out = self.pipeline.invoke({"bundle": self.bundle, "event": None})
         self.seams = {s.id: s for s in out["seams"]}
-        self.drafts = {}
-        self.signoff = {"state": "pending"}
-        self.history = []
+        self.drafts, self.signoff, self.history = {}, {"state": "pending"}, []
+        self.dept_summary = out.get("dept_summary", {})
         self._merge_drafts(out["drafts"])
         self.last_verified = now()
         self._log("run", "agent", {"rules_version": RULES_VERSION, "records": len(self.bundle.records),
-                                   "records_sha": _sha(self.records_path), "pipeline": out["trace"],
+                                   "source_sha": source_sha(self.source), "pipeline": out["trace"],
+                                   "departments": self.dept_summary,
                                    "seams": sorted(self.seams), "drafts": sorted(self.drafts)})
         self.save()
         return self.passport()
 
-    def apply_event(self, ev: Event, cause: str | None = None) -> dict[str, Any]:
-        before = self.passport()
-        work = self.bundle.model_copy(deep=True)            # only commit if the whole pipeline succeeds
-        out = self.pipeline.invoke({"bundle": work, "event": ev})
-        self.bundle, scope = work, out["scope"]
-
+    def _commit(self, out: dict, before: dict, ev_desc: dict, actor: str, cause: str | None) -> dict[str, Any]:
+        """Merge a selective re-check into state, verify it against a full re-check, log, save."""
+        scope = out["scope"]
         kept = {sid: s for sid, s in self.seams.items() if not (scope & set(s.nodes))}
         fresh = {s.id: s for s in out["seams"]}
         for sid, s in fresh.items():               # carry a waiver over only if the facts are unchanged
             old = self.seams.get(sid)
             if old and old.status == "waived" and old.title == s.title:
                 s.status, s.waiver = old.status, old.waiver
-        self.seams = {**kept, **fresh}
+        merged = {**kept, **fresh}
+
+        # safety net: the selective result must equal a full re-check (rules are cheap and deterministic)
+        full = {s.id: s.title for s in detect(build_graph(self.bundle), self.bundle)}
+        selective_ok = full == {sid: s.title for sid, s in merged.items()}
+        if not selective_ok:
+            redo = self.pipeline.invoke({"bundle": self.bundle, "event": None})
+            merged = {s.id: s for s in redo["seams"]}
+        ranked = rank(list(merged.values()), self.bundle.scenario.as_of, self.product.launch_date)  # as_of may move
+        self.seams = {s.id: s for s in ranked}
+        self.dept_summary = out.get("dept_summary", self.dept_summary)
         self._merge_drafts(out["drafts"])
         self.last_verified = now()
 
         before_ids, after_ids = {s["id"] for s in before["seams"]}, set(self.seams)
-        diff = {"event": ev.model_dump(), "cause": cause, "rechecked_nodes": sorted(scope),
+        before_titles = {s["id"]: s["title"] for s in before["seams"]}
+        diff = {"event": ev_desc, "cause": cause, "rechecked_nodes": sorted(scope),
+                "selective_matches_full": selective_ok,
                 "opened": sorted(after_ids - before_ids), "closed": sorted(before_ids - after_ids),
-                "status_before": before["overall"], "status_after": None, "invalidated_signoff": None}
-        if (diff["opened"] or diff["closed"]) and self.signoff["state"] in ("go", "no_go"):
+                "changed": sorted(sid for sid in after_ids & before_ids if self.seams[sid].title != before_titles[sid]),
+                "status_before": before["overall"], "status_after": None, "invalidated_signoff": None,
+                "departments_before": {k: v["own_view"] for k, v in before["departments"].items()}}
+        if (diff["opened"] or diff["closed"] or diff["changed"]) and self.signoff["state"] in ("go", "no_go"):
             diff["invalidated_signoff"] = self.signoff
             self.signoff = {"state": "pending", "invalidated": self.signoff,
-                            "reason": f"seams changed after event '{ev.type}'"}
+                            "reason": f"seams changed after event '{ev_desc.get('id') or ev_desc.get('type')}'"}
         after = self.passport()
         diff["status_after"] = after["overall"]
+        diff["departments_after"] = {k: v["own_view"] for k, v in after["departments"].items()}
         self.history.append({"at": now(), "before": before, "after": after, "diff": diff})
-        self._log("event", ev.actor, {**diff, "pipeline": out["trace"]})
+        self._log("event", actor, {**diff, "pipeline": out["trace"]})
         self.save()
         return {"diff": diff, "passport": after}
 
+    def apply_event(self, ev: Event, cause: str | None = None) -> dict[str, Any]:
+        """Typed event (records mode, and owner reassignment from drafts)."""
+        before = self.passport()
+        work = self.bundle.model_copy(deep=True)            # only commit if the whole pipeline succeeds
+        out = self.pipeline.invoke({"bundle": work, "event": ev})
+        self.bundle = work
+        return self._commit(out, before, {"type": ev.type, "data": ev.data}, ev.actor, cause)
+
+    # ---------- dataset events (Person 1's stream and what-if scenarios) ----------
+
+    def stream(self) -> list[dict[str, Any]]:
+        if self.dataset is None:
+            return []
+        return [{"event_id": e["event_id"], "date": e.get("date"), "description": e.get("description"),
+                 "applied": e["event_id"] in self.dataset.applied} for e in self.dataset.events]
+
+    def apply_dataset_event(self, event: dict[str, Any], actor: str = "event-stream") -> dict[str, Any]:
+        if self.dataset is None:
+            raise GovernanceError("dataset events need the engine to run on a data directory")
+        eid = event.get("event_id", "custom")
+        if eid in self.dataset.applied:
+            raise GovernanceError(f"event {eid} is already applied; POST /run to reset")
+        before = self.passport()
+        g_before = build_graph(self.bundle)
+        work = self.dataset.copy()
+        touched = apply_file_event(work, event)              # EventError on a bad change: nothing applied
+        new_bundle = self._extract(work)
+        g_after = build_graph(new_bundle)
+        changed = {t for t in touched if t in g_before or t in g_after}
+        if any(t in DOC_PATH_TO_PRODUCT for t in touched):
+            changed.add(new_bundle.scenario.product_id)
+        out = self.pipeline.invoke({"bundle": new_bundle, "event": None, "changed": changed, "g_before": g_before})
+        self.dataset, self.bundle = work, new_bundle
+        desc = {"id": eid, "date": event.get("date"), "description": event.get("description"),
+                "files": sorted({c["file"] for c in event["changes"]})}
+        return self._commit(out, before, desc, actor, None)
+
+    SCENARIOS = ROOT / "scenarios"
+
+    def scenarios(self) -> list[dict[str, Any]]:
+        applied = set(self.dataset.applied) if self.dataset else set()
+        out = []
+        for f in sorted(self.SCENARIOS.glob("*.json")):
+            ev = json.loads(f.read_text())
+            out.append({"name": f.stem, "event_id": ev.get("event_id"), "description": ev.get("description"),
+                        "applied": ev.get("event_id") in applied})
+        return out
+
+    def apply_scenario(self, name: str) -> dict[str, Any]:
+        f = self.SCENARIOS / f"{name}.json"
+        if not f.is_file() or f.parent != self.SCENARIOS:
+            raise GovernanceError(f"unknown scenario '{name}'")
+        return self.apply_dataset_event(json.loads(f.read_text()), actor=f"scenario:{name}")
+
+    def apply_stream_event(self, event_id: str) -> dict[str, Any]:
+        ev = next((e for e in (self.dataset.events if self.dataset else []) if e["event_id"] == event_id), None)
+        if ev is None:
+            raise GovernanceError(f"unknown event '{event_id}'")
+        return self.apply_dataset_event(ev)
+
     # ---------- sign-off (5.2) ----------
+
+    def blocking(self) -> list[str]:
+        return [x.id for x in self.seams.values()
+                if x.status == "open" and (x.blocks_launch or x.severity == "critical")]
 
     def sign(self, s: SignOff) -> dict[str, Any]:
         action = "waive_seam" if s.decision == "waive" else "go_no_go"
@@ -160,11 +272,10 @@ class Engine:
             seam.waiver = {"by": s.signer_name, "role": s.signer_role, "reason": s.reason, "at": now()}
             self._merge_drafts([])
         elif s.decision == "go":
-            blocking = [x.id for x in self.seams.values()
-                        if x.status == "open" and x.severity in ("critical", "high")]
+            blocking = self.blocking()
             if blocking:
                 self._log("signoff_refused", s.signer_name, {"decision": "go", "blocking": blocking})
-                raise GovernanceError(f"cannot sign go with open critical/high seams: {blocking}. "
+                raise GovernanceError(f"cannot sign go with open launch-blocking seams: {blocking}. "
                                       "Fix or waive them first.")
             self.signoff = {"state": "go", "by": s.signer_name, "role": s.signer_role,
                             "reason": s.reason, "at": now()}
@@ -193,13 +304,19 @@ class Engine:
             new_owner = d.params.get("owner_id")
             if not new_owner:
                 raise GovernanceError("reassign_owner needs params.owner_id (the successor)")
-            # execute as events so the re-check, diff and audit all happen; validate first, all or nothing
             if new_owner not in {p.id for p in self.bundle.entities.people}:
                 raise GovernanceError(f"unknown person '{new_owner}'")
-            for rid in d.params["record_ids"]:
-                result = self.apply_event(Event(type="record_update", actor=s.signer_name,
-                                                data={"record_id": rid, "owner_id": new_owner}),
-                                          cause=draft_id)
+            if self.dataset is not None:   # real data: reassign in Legal's register file, like EV-04 does
+                result = self.apply_dataset_event({
+                    "event_id": f"draft:{draft_id}", "date": self.dataset.as_of,
+                    "description": f"Approved draft: reassign obligations to {new_owner}",
+                    "changes": [{"file": "legal/obligations_register.csv", "op": "update",
+                                 "match": {"obligation_id": rid}, "set": {"owner_id": new_owner}}
+                                for rid in d.params["record_ids"]]}, actor=s.signer_name)
+            else:
+                for rid in d.params["record_ids"]:
+                    result = self.apply_event(Event(type="record_update", actor=s.signer_name,
+                                                    data={"record_id": rid, "owner_id": new_owner}), cause=draft_id)
         elif approve and d.action == "notify_owner":
             decision["delivery"] = "simulated (demo: no email is sent)"
         d.status = "approved" if approve else "rejected"
@@ -228,14 +345,21 @@ class Engine:
             unmet = [r.id for r in recs if r.status == "unmet"]
             unknown = [r.id for r in recs if r.status == "unknown"]
             touching = [s for s in open_seams if name in s.departments]
-            status: Go = "go"
-            if unknown or touching:
+            own: Go = "conditional" if (unmet or unknown) else "go"   # in-department findings: fix, not block
+            status: Go = own
+            if touching:
                 status = "conditional"
-            if unmet or any(s.severity == "critical" for s in touching):
+            if any(s.blocks_launch or s.severity == "critical" for s in touching):
                 status = "no_go"
-            depts[name] = {"status": status, "records": len(recs), "unmet": unmet, "unknown": unknown,
-                           "own_view": "no_go" if unmet else "conditional" if unknown else "go",
-                           "open_seams": [s.id for s in touching]}
+            depts[name] = {
+                "status": status, "own_view": own, "records": len(recs), "unmet": unmet, "unknown": unknown,
+                "open_seams": [s.id for s in touching],
+                "findings": [{"record": r.id, "status": r.status, "basis": r.attributes.get("check", {}).get("basis"),
+                              "finding": r.attributes.get("check", {}).get("finding"),
+                              "items": r.attributes.get("check", {}).get("items", [])}
+                             for r in recs if r.status != "met"],
+                "self_attested": [r.id for r in recs if r.attributes.get("check", {}).get("basis") == "self_attested"],
+            }
 
         overall = max((d["status"] for d in depts.values()), key=ORDER.get, default="go")
         people = {p.id: p.name for p in b.entities.people}
@@ -244,25 +368,34 @@ class Engine:
             [{"what": f"{r.id}: {ev.source}", "expires_on": str(ev.expires_on)}
              for r in b.records for ev in r.evidence if ev.expires_on and ev.expires_on <= horizon]
             + [{"what": f"{p.name}: {t.course}", "expires_on": str(t.expires_on)}
-               for p in b.entities.people for t in p.trainings if t.expires_on and t.expires_on <= horizon]
+               for p in b.entities.people if p.active for t in p.trainings
+               if t.expires_on and b.scenario.as_of <= t.expires_on <= horizon]
             + [{"what": f"{v.name}: due diligence", "expires_on": str(v.dd_expires_on)}
-               for v in b.entities.vendors if v.dd_expires_on and v.dd_expires_on <= horizon],
+               for v in b.entities.vendors if v.dd_expires_on and v.dd_expires_on <= horizon]
+            + [{"what": f"{c.id} {c.title}", "expires_on": str(c.end_date)}
+               for c in b.entities.contracts if c.end_date and b.scenario.as_of <= c.end_date <= horizon],
             key=lambda x: x["expires_on"])
 
         return {
             "company": b.scenario.company,
+            "source": "dataset" if self.dataset is not None else "records",
             "product": {"id": prod.id, "name": prod.name, "version": prod.launch_version,
                         "launch_date": str(prod.launch_date)},
             "as_of": str(b.scenario.as_of),
             "overall": overall,
+            "blocking_seams": self.blocking(),
             "departments": depts,
             "seams": [{**s.model_dump(mode="json"), "fix_owner": people.get(s.fix_owner_id or "")}
                       for s in sorted(self.seams.values(), key=lambda s: (-s.score, s.id))],
             "drafts": [d.model_dump(mode="json") for d in self.drafts.values() if d.status == "pending"],
-            "people": [{"id": p.id, "name": p.name, "role": p.role} for p in b.entities.people],
+            "people": [{"id": p.id, "name": p.name, "role": p.role} for p in b.entities.people if p.active],
+            "events": self.stream(),
+            "scenarios": self.scenarios() if self.dataset is not None else [],
             "signoff": self.signoff,
             "evidence_expiring": expiring,
             "policy_versions": {"rules": RULES_VERSION, "tiers": self.policy.version},
+            "extraction": {k: self.extraction_report.get(k) for k in ("records_by_department", "quote_check")}
+                          if self.extraction_report else None,
             "last_verified": self.last_verified,
             "audit": self.audit.verify(),
             "disclaimer": "Evidence-backed review on synthetic data, not a compliance certificate.",

@@ -52,7 +52,7 @@ class SeamClient:
 
     def _local_call(self, method: str, path: str, body: dict | None) -> Any:
         from fastapi import HTTPException
-        from .api import DraftDecision, Event, SignOff
+        from .api import DraftDecision, Event, FileEvent, SignOff
         a = self._engine()
         parts = path.strip("/").split("/")
         try:
@@ -62,6 +62,16 @@ class SeamClient:
                 return a.run()
             if path == "/events":
                 return a.events(Event(**body))
+            if path == "/events/custom":
+                return a.custom_event(FileEvent(**body))
+            if path == "/events/stream":
+                return a.stream()
+            if parts[:2] == ["events", "stream"]:
+                return a.stream_event(parts[2])
+            if path == "/scenarios":
+                return a.scenarios()
+            if parts[0] == "scenarios":
+                return a.scenario(parts[1])
             if path == "/signoffs":
                 return a.signoffs(SignOff(**body))
             if parts[0] == "drafts":
@@ -88,7 +98,27 @@ class SeamClient:
         return self._call("POST", "/run")
 
     def event(self, type: str, **data) -> dict:
+        """Typed event (fixtures mode only)."""
         return self._call("POST", "/events", {"type": type, "data": data, "actor": "manager-ui"})
+
+    def stream(self) -> list:
+        """Person 1's event stream, with applied flags."""
+        return self._call("GET", "/events/stream")
+
+    def apply_stream(self, event_id: str) -> dict:
+        return self._call("POST", f"/events/stream/{event_id}")
+
+    def scenarios(self) -> list:
+        return self._call("GET", "/scenarios")
+
+    def scenario(self, name: str) -> dict:
+        return self._call("POST", f"/scenarios/{name}")
+
+    def custom_event(self, changes: list[dict], description: str = "", event_id: str = "custom",
+                     date: str | None = None) -> dict:
+        """Ad-hoc what-if in the event-stream file-change format."""
+        return self._call("POST", "/events/custom", {"event_id": event_id, "description": description,
+                                                      "date": date, "changes": changes})
 
     def sign(self, decision: str, signer_name: str, signer_role: str, reason: str,
              seam_id: str | None = None) -> dict:

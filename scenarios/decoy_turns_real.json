@@ -1,0 +1,7 @@
+{"event_id": "WHATIF-decoy", "date": "2026-11-21",
+ "description": "Harbor Analytics (US) is wired into QuickPay to analyse customer payment data.",
+ "changes": [
+  {"file": "finance/vendors.csv", "op": "update", "match": {"vendor_id": "V003"}, "set": {"handles_customer_data": "Y"}},
+  {"file": "product/product_record.json", "op": "append", "path": "data_flows",
+   "value": {"processor_vendor_id": "V003", "data_category": "customer payment data", "purpose": "usage analytics"}}
+ ]}

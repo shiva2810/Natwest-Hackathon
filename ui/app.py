@@ -1,5 +1,5 @@
-"""PLACEHOLDER passport UI so the demo runs end to end today.
-Person 3 owns the real UI (6.1-6.4): replace freely, but keep using SeamClient.
+"""PLACEHOLDER passport UI so the demo runs end to end. Person 3 owns the real UI (6.1-6.4):
+replace freely, but keep using SeamClient. Everything here is driven by the passport JSON.
 """
 import sys
 from pathlib import Path
@@ -19,48 +19,94 @@ def client():
     return SeamClient()
 
 
+def act(fn, *a, **k):
+    try:
+        out = fn(*a, **k)
+        if isinstance(out, dict) and "diff" in out:
+            st.session_state["last_diff"] = out["diff"]
+        st.rerun()
+    except SeamError as e:
+        st.error(str(e))
+
+
 c = client()
 p = c.passport()
 
 st.title(f"{p['product']['name']} v{p['product']['version']} · launch {p['product']['launch_date']}")
-st.caption(f"{p['company']} · last verified {p['last_verified']} · rules {p['policy_versions']['rules']} · "
-           f"backend: {c.mode} · {p['disclaimer']}")
-st.header(ICON[p["overall"]])
+st.caption(f"{p['company']} · as of {p['as_of']} · last verified {p['last_verified']} · rules "
+           f"{p['policy_versions']['rules']} · backend: {c.mode} · {p['disclaimer']}")
+left, right = st.columns([3, 1])
+left.header(ICON[p["overall"]])
+right.metric("Sign-off", p["signoff"]["state"].upper(), p["signoff"].get("by") or p["signoff"].get("reason", ""),
+             delta_color="off")
 
 cols = st.columns(len(p["departments"]))
 for col, (name, d) in zip(cols, p["departments"].items()):
-    col.metric(name, ICON[d["status"]], f"alone: {d['own_view']}", delta_color="off")
+    col.metric(name, ICON[d["status"]], f"alone: {ICON[d['own_view']]}", delta_color="off")
+    for f in d["findings"]:
+        col.caption(f"{'⚠️' if f['status'] == 'unmet' else '❔' if f['status'] == 'unknown' else '📝'} "
+                    f"{f['record']}: {f['finding']}")
+
+if "last_diff" in st.session_state:
+    d = st.session_state["last_diff"]
+    st.info(f"**{d['event'].get('id') or d['event'].get('type')}** {d['event'].get('description', '')} — "
+            f"opened {d['opened'] or '-'}, closed {d['closed'] or '-'}, changed {d['changed'] or '-'}; "
+            f"{d['status_before']} → {d['status_after']}; re-checked {len(d['rechecked_nodes'])} nodes "
+            f"(matches full: {d['selective_matches_full']})")
 
 st.subheader("Seams")
 for s in p["seams"]:
-    with st.expander(f"[{s['status'] if s['status'] == 'waived' else s['severity']}] {s['title']}"):
+    tag = "WAIVED" if s["status"] == "waived" else s["severity"].upper()
+    block = "" if s["blocks_launch"] else " · does not block launch"
+    with st.expander(f"[{tag}] {s['title']}{block}"):
         st.write(s["explanation"])
         st.write("**Fix options:** " + " · ".join(s["fix_options"]))
-        st.caption(f"Departments: {', '.join(s['departments'])} · fix owner: {s['fix_owner']} · score {s['score']}")
+        st.caption("Basis: " + " | ".join(s["basis"]))
+        st.caption(f"Departments: {', '.join(s['departments'])} · fix owner: {s['fix_owner']} · score {s['score']} "
+                   f"· explained by {s['facts'].get('explained_by')}")
         if s["waiver"]:
-            st.info(f"Waived by {s['waiver']['by']}: {s['waiver']['reason']}")
+            st.info(f"Waived by {s['waiver']['by']} ({s['waiver']['role']}): {s['waiver']['reason']}")
+
+ev_col, sc_col = st.columns(2)
+with ev_col:
+    st.subheader("Event stream")
+    for e in p["events"]:
+        if st.button(f"{'✅' if e['applied'] else '▶️'} {e['event_id']} ({e['date']}): {e['description'][:70]}",
+                     key=e["event_id"], disabled=e["applied"]):
+            act(c.apply_stream, e["event_id"])
+with sc_col:
+    st.subheader("What-if scenarios")
+    for s in p.get("scenarios", []):
+        if st.button(f"{'✅' if s['applied'] else '🧪'} {s['name']}: {s['description'][:70]}",
+                     key=s["name"], disabled=s["applied"]):
+            act(c.scenario, s["name"])
+
+st.subheader("Agent drafts (need a human)")
+people = {x["id"]: f"{x['name']} ({x['role']})" for x in p["people"]}
+for d in p["drafts"]:
+    with st.expander(d["summary"]):
+        with st.form(f"draft-{d['id']}"):
+            n, r = st.text_input("Your name"), st.text_input("Your role")
+            why = st.text_input("Reason")
+            owner = (st.selectbox("Successor", list(people), format_func=people.get)
+                     if d["action"] == "reassign_owner" else None)
+            a, b = st.columns(2)
+            if a.form_submit_button("Approve"):
+                act(c.decide_draft, d["id"], True, n, r, why, **({"owner_id": owner} if owner else {}))
+            if b.form_submit_button("Reject"):
+                act(c.decide_draft, d["id"], False, n, r, why)
 
 st.subheader("Sign-off")
-st.write(p["signoff"])
 with st.form("sign"):
     name, role = st.text_input("Your name"), st.text_input("Your role")
     decision = st.selectbox("Decision", ["go", "no_go", "waive"])
     seam_id = st.selectbox("Seam (for waive)", [None] + [s["id"] for s in p["seams"] if s["status"] == "open"])
     reason = st.text_area("Reason")
     if st.form_submit_button("Sign"):
-        try:
-            c.sign(decision, name, role, reason, seam_id); st.rerun()
-        except SeamError as e:
-            st.error(e)
+        act(c.sign, decision, name, role, reason, seam_id)
 
-st.subheader("Events")
-ev = {"Ship v1.4 instead": ("new_product_version", {"product_id": "prod-swiftsave", "version": "1.4"}),
-      "PayFlow passes DD": ("vendor_change", {"vendor_id": "v-payflow", "due_diligence": "complete"}),
-      "Ana resigns": ("resignation", {"person_id": "p-ana", "leaving_on": "2026-12-05"})}
-for col, (label, (t, data)) in zip(st.columns(len(ev) + 1), ev.items()):
-    if col.button(label):
-        st.session_state["last_diff"] = c.event(t, **data)["diff"]; st.rerun()
 if st.button("Reset demo"):
-    c.reset(); st.session_state.pop("last_diff", None); st.rerun()
-if "last_diff" in st.session_state:
-    st.json(st.session_state["last_diff"], expanded=False)
+    st.session_state.pop("last_diff", None)
+    act(c.reset)
+with st.expander("Evidence expiring soon"):
+    st.table(p["evidence_expiring"])

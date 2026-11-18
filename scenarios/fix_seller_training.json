@@ -1,0 +1,7 @@
+{"event_id": "WHATIF-seller-training", "date": "2026-11-26",
+ "description": "Chloe Dubois, Ben Foster and Dmitri Volkov complete PCT-101.",
+ "changes": [
+  {"file": "hr/training_records.csv", "op": "update", "match": {"employee_id": "E014", "course_code": "PCT-101"}, "set": {"status": "valid", "completed_date": "2026-11-26", "expiry_date": "2027-11-26"}},
+  {"file": "hr/training_records.csv", "op": "update", "match": {"employee_id": "E013", "course_code": "PCT-101"}, "set": {"status": "valid", "completed_date": "2026-11-26", "expiry_date": "2027-11-26"}},
+  {"file": "hr/training_records.csv", "op": "update", "match": {"employee_id": "E015", "course_code": "PCT-101"}, "set": {"status": "valid", "completed_date": "2026-11-26", "expiry_date": "2027-11-26"}}
+ ]}
