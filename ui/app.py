@@ -7,9 +7,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from seam.client import SeamClient, SeamError
 from ui.audit_chat import render as audit_chat
+from seam.report import render_report
 from ui.live_check import render as live_check
 
 st.set_page_config(page_title="Compliance passport", layout="wide")
@@ -33,6 +35,7 @@ def act(fn, *a, **k):
 
 c = client()
 p = c.passport()
+report_html = render_report(p, c.audit())   # built from the same passport as the screen
 
 st.title(f"{p['product']['name']} v{p['product']['version']} · launch {p['product']['launch_date']}")
 st.caption(f"{p['company']} · as of {p['as_of']} · last verified {p['last_verified']} · rules "
@@ -44,6 +47,8 @@ left, right = st.columns([3, 1])
 left.header(ICON[p["overall"]])
 right.metric("Sign-off", p["signoff"]["state"].upper(), p["signoff"].get("by") or p["signoff"].get("reason", ""),
              delta_color="off")
+right.download_button("⬇ Download audit report", report_html, "compliance-audit-report.html", "text/html",
+                      use_container_width=True, help="One self-contained HTML file that opens offline.")
 
 cols = st.columns(len(p["departments"]))
 for col, (name, d) in zip(cols, p["departments"].items()):
@@ -119,3 +124,7 @@ if st.button("Reset demo"):
     act(c.reset)
 with st.expander("Evidence expiring soon"):
     st.table(p["evidence_expiring"])
+
+st.subheader("Audit report")
+with st.expander("Preview the report the user receives"):
+    components.html(report_html, height=900, scrolling=True)

@@ -182,5 +182,10 @@ class SeamClient:
     def audit(self) -> dict:
         return self._call("GET", "/audit")
 
+    def report(self) -> str:
+        """The audit report as one self-contained HTML document (see seam/report.py)."""
+        from .report import render_report
+        return render_report(self.passport(), self.audit())
+
     def agent_attempt(self, action: str) -> dict:
         return self._call("POST", f"/agent/attempt/{action}")

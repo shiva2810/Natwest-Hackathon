@@ -478,6 +478,9 @@ class Engine:
             "people": [{"id": p.id, "name": p.name, "role": p.role} for p in b.entities.people if p.active],
             "events": self.stream(),
             "scenarios": self.scenarios() if self.dataset is not None else [],
+            "records": [{**r.model_dump(mode="json"), "owner": people.get(r.owner_id or "")}
+
+                        for r in b.records],          # every check, so a report can show passes too
             "signoff": self.signoff,
             "evidence_expiring": expiring,
             "policy_versions": {"rules": RULES_VERSION, "tiers": self.policy.version},

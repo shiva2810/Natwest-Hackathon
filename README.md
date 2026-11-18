@@ -40,6 +40,12 @@ events/ + scenarios/ ──> file changes ──> re-extract ──> selective r
                    └── FastAPI (:8765) ──> SeamClient ──> Streamlit UI (:8501, Person 3)
 ```
 
+## Audit report (HTML)
+The user gets the report as a single HTML file, built from the live passport:
+- UI: **Download report** button (top right) or the **Audit report** tab (preview).
+- API: `GET /report` (add `?download=true` to save). CLI: `python -m scripts.export_report [path]` -> `reports/`.
+- Code: `SeamClient().report()` or `seam.report.render_report(passport, audit)`.
+
 ## Handoffs
 - **Person 1 → 2:** a `records.json` matching `seam/schema.py::Bundle`. Run with `SEAM_RECORDS=path`.
   A new or changed file triggers a fresh run automatically. Until then, `fixtures/records.json` has 5 planted seams
@@ -60,5 +66,6 @@ events/ + scenarios/ ──> file changes ──> re-extract ──> selective r
 | `seam/governance.py`, `config/autonomy_tiers.json` | 5.1 tiers, 5.2 sign-off, 5.3 audit log |
 | `seam/engine.py` | state, persistence, sign-off/draft flow, passport roll-up |
 | `seam/api.py`, `seam/client.py` | X.2 API and the UI client |
+| `seam/report.py` | audit report: one self-contained HTML file in the layout of `samples/compliance-checker/sample-audit-report.html` |
 | `ui/app.py` | placeholder UI (Person 3 replaces) |
 | `scripts/` | demo launcher and scripted story |

@@ -28,6 +28,7 @@ Endpoints (the Person 2 <-> Person 3 contract):
   POST /drafts/{id}/reject          same body
   GET  /history                     before/after snapshots for the diff view
   GET  /audit                       entries + tamper check
+  GET  /report[?download=true]      the audit report as one self-contained HTML page
   POST /agent/attempt/{action}      show the tier policy stopping an agent
 """
 from __future__ import annotations
@@ -38,12 +39,14 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, ValidationError
 
 from .engine import Engine
 from .governance import ROOT, GovernanceError, SignOff
 from .pipeline import Event
 from .sources import EventError
+from .report import render_report
 
 SOURCE = Path(os.environ.get("SEAM_RECORDS") or os.environ.get("SEAM_DATA") or ROOT / "data")
 AUDIT = Path(os.environ.get("SEAM_AUDIT", ROOT / "runs" / "audit.jsonl"))
@@ -246,6 +249,14 @@ def history():
 def audit():
     with lock:
         return {"verify": engine.audit.verify(), "entries": engine.audit.entries()}
+
+
+@app.get("/report", response_class=HTMLResponse)
+def report(download: bool = False):
+    with lock:
+        page = render_report(engine.passport(), {"verify": engine.audit.verify(), "entries": engine.audit.entries()})
+    headers = {"Content-Disposition": 'attachment; filename="compliance-audit-report.html"'} if download else {}
+    return HTMLResponse(page, headers=headers)
 
 
 @app.post("/agent/attempt/{action}")
