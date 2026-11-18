@@ -1,0 +1,9 @@
+networkx
+pydantic>=2
+fastapi
+uvicorn
+httpx
+requests
+langgraph
+streamlit
+pytest

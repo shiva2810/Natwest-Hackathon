@@ -1,0 +1,81 @@
+{
+  "scenario": {"company": "Harbourline Bank (fictional)", "as_of": "2026-11-18", "product_id": "prod-swiftsave"},
+  "entities": {
+    "people": [
+      {"id": "p-priya", "name": "Priya Shah", "role": "Product Compliance Lead", "department": "Legal",
+       "active": true, "leaving_on": "2026-11-30", "approval_limit": 0, "trainings": []},
+      {"id": "p-tom", "name": "Tom Reid", "role": "Operations Manager", "department": "Operations",
+       "active": true, "approval_limit": 50000,
+       "trainings": [{"course": "AML Foundations", "completed_on": "2026-03-01", "expires_on": "2027-03-01"}]},
+      {"id": "p-ana", "name": "Ana Costa", "role": "Data Protection Officer", "department": "Legal",
+       "active": true, "approval_limit": 0,
+       "trainings": [{"course": "GDPR Advanced", "completed_on": "2025-12-01", "expires_on": "2026-12-01"}]},
+      {"id": "p-james", "name": "James Okafor", "role": "Head of Finance", "department": "Finance",
+       "active": true, "approval_limit": 250000, "trainings": []},
+      {"id": "p-lena", "name": "Lena Park", "role": "Marketing Manager", "department": "Marketing",
+       "active": true, "approval_limit": 25000, "trainings": []}
+    ],
+    "vendors": [
+      {"id": "v-cloudnest", "name": "CloudNest Hosting", "due_diligence": "complete", "dd_expires_on": "2027-06-30"},
+      {"id": "v-payflow", "name": "PayFlow Payments", "due_diligence": "pending", "dd_expires_on": null},
+      {"id": "v-brightads", "name": "BrightAds Agency", "due_diligence": "complete", "dd_expires_on": "2027-02-28"}
+    ],
+    "contracts": [
+      {"id": "c-cloudnest", "title": "SwiftSave hosting", "vendor_id": "v-cloudnest", "value": 200000,
+       "signed_by": "p-james", "product_id": "prod-swiftsave"},
+      {"id": "c-payflow", "title": "SwiftSave payment processing", "vendor_id": "v-payflow", "value": 120000,
+       "signed_by": "p-james", "product_id": "prod-swiftsave"},
+      {"id": "c-brightads", "title": "SwiftSave launch campaign", "vendor_id": "v-brightads", "value": 80000,
+       "signed_by": "p-lena", "product_id": "prod-swiftsave"}
+    ],
+    "products": [
+      {"id": "prod-swiftsave", "name": "SwiftSave app", "launch_version": "2.0", "launch_date": "2026-12-10"}
+    ]
+  },
+  "records": [
+    {"id": "hr-aml-tom", "department": "HR", "kind": "training_required",
+     "description": "Operations manager must hold AML Foundations", "owner_id": "p-tom",
+     "product_id": "prod-swiftsave", "status": "met", "attributes": {"course": "AML Foundations"},
+     "evidence": [{"source": "hr/training.csv", "expires_on": "2027-03-01"}], "extracted_by": "fixture"},
+    {"id": "hr-seat-compliance", "department": "HR", "kind": "role_owner",
+     "description": "Headcount plan keeps a Product Compliance Lead seat filled", "owner_id": "p-priya",
+     "status": "met", "evidence": [{"source": "hr/headcount_plan.csv"}], "extracted_by": "fixture"},
+
+    {"id": "fin-dd-payflow", "department": "Finance", "kind": "vendor_due_diligence",
+     "description": "PayFlow must pass vendor due diligence before spend", "vendor_id": "v-payflow",
+     "status": "unknown", "evidence": [{"source": "finance/vendors.csv"}], "extracted_by": "fixture"},
+    {"id": "fin-dd-cloudnest", "department": "Finance", "kind": "vendor_due_diligence",
+     "description": "CloudNest must pass vendor due diligence before spend", "vendor_id": "v-cloudnest",
+     "status": "met", "evidence": [{"source": "finance/vendors.csv", "expires_on": "2027-06-30"}], "extracted_by": "fixture"},
+    {"id": "fin-budget-cloudnest", "department": "Finance", "kind": "budget_line",
+     "description": "Hosting budgeted", "contract_id": "c-cloudnest", "status": "met",
+     "attributes": {"amount": 200000}, "evidence": [{"source": "finance/budget.csv"}], "extracted_by": "fixture"},
+    {"id": "fin-budget-payflow", "department": "Finance", "kind": "budget_line",
+     "description": "Payment processing budgeted", "contract_id": "c-payflow", "status": "met",
+     "attributes": {"amount": 120000}, "evidence": [{"source": "finance/budget.csv"}], "extracted_by": "fixture"},
+    {"id": "fin-budget-brightads", "department": "Finance", "kind": "budget_line",
+     "description": "Launch campaign budgeted", "contract_id": "c-brightads", "status": "met",
+     "attributes": {"amount": 80000}, "evidence": [{"source": "finance/budget.csv"}], "extracted_by": "fixture"},
+
+    {"id": "leg-approval-swiftsave", "department": "Legal", "kind": "product_approval",
+     "description": "Product approval committee sign-off for SwiftSave", "product_id": "prod-swiftsave",
+     "owner_id": "p-priya", "status": "met", "attributes": {"approved_version": "1.4"},
+     "evidence": [{"source": "legal/product_approval.json", "quote": "Approved: SwiftSave v1.4"}], "extracted_by": "fixture"},
+    {"id": "leg-consumer-duty", "department": "Legal", "kind": "role_owner",
+     "description": "Named owner monitors Consumer Duty outcomes after launch", "owner_id": "p-priya",
+     "product_id": "prod-swiftsave", "status": "met",
+     "evidence": [{"source": "legal/obligations.json", "quote": "Owner: Product Compliance Lead"}], "extracted_by": "fixture"},
+    {"id": "leg-dpo-cert", "department": "Legal", "kind": "training_required",
+     "description": "DPO must hold GDPR Advanced while customer data is processed", "owner_id": "p-ana",
+     "product_id": "prod-swiftsave", "contract_id": "c-payflow", "status": "met",
+     "attributes": {"course": "GDPR Advanced"},
+     "evidence": [{"source": "legal/contract_payflow.txt", "quote": "The Data Protection Officer shall hold a current GDPR Advanced certification."}],
+     "extracted_by": "fixture"},
+    {"id": "leg-breach-notice", "department": "Legal", "kind": "contract_term",
+     "description": "Hosting provider must report breaches within 24 hours", "owner_id": "p-tom",
+     "contract_id": "c-cloudnest", "vendor_id": "v-cloudnest", "status": "met",
+     "attributes": {"term": "24h breach notification"},
+     "evidence": [{"source": "legal/contract_cloudnest.txt", "quote": "Provider shall notify the Client of any security breach within 24 hours."}],
+     "extracted_by": "fixture"}
+  ]
+}

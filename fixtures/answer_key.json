@@ -1,0 +1,15 @@
+{
+  "_note": "Planted seams in fixtures/records.json. Person 1 replaces this with the real answer key (1.5).",
+  "expected_seams": [
+    {"type": "orphaned_owner", "anchor": "p-priya",
+     "why": "Legal names Priya as Consumer Duty owner; HR shows she leaves 2026-11-30, before the 2026-12-10 launch."},
+    {"type": "version_drift", "anchor": "leg-approval-swiftsave",
+     "why": "Legal approved v1.4; the launch ships v2.0."},
+    {"type": "unvetted_vendor", "anchor": "c-payflow",
+     "why": "Legal signed PayFlow; Finance due diligence is still pending."},
+    {"type": "training_lapse", "anchor": "leg-dpo-cert",
+     "why": "PayFlow contract needs the DPO certified; HR shows Ana's GDPR Advanced expires 2026-12-01, before launch."},
+    {"type": "approval_limit_breach", "anchor": "c-brightads",
+     "why": "Lena signed an 80,000 contract; her approval limit is 25,000."}
+  ]
+}

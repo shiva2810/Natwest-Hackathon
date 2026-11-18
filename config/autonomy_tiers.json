@@ -1,0 +1,13 @@
+{
+  "policy_version": "tiers-2026.11.18-a",
+  "_tiers": "auto = agent does it alone; draft = agent prepares, a human approves; human = only a named human may do it",
+  "actions": {
+    "run_checks": "auto",
+    "explain_seam": "auto",
+    "refresh_evidence": "auto",
+    "notify_owner": "draft",
+    "reassign_owner": "draft",
+    "waive_seam": "human",
+    "go_no_go": "human"
+  }
+}
