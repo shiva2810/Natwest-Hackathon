@@ -2,7 +2,7 @@
 
 Source: the real dataset in data/ by default (SEAM_DATA to override); set SEAM_RECORDS to a
 records.json to run on fixtures instead.
-LLM: with ANTHROPIC_API_KEY (env or .env) the referee uses Claude, cached in cache/llm/;
+LLM: with ANTHROPIC_API_KEY or OPENAI_API_KEY (env or .env; see seam/providers.py) the referee uses that model, cached in cache/llm/;
 without one it replays the cache and falls back to template text. SEAM_LLM=off forces offline.
 SEAM_LLM_EXTRACT=on also uses Claude for policy-text extraction (default: deterministic).
 
@@ -56,8 +56,8 @@ STATE = Path(os.environ.get("SEAM_STATE", ROOT / "runs" / "state.json"))
 def _llms():
     if os.environ.get("SEAM_LLM", "on").lower() == "off":
         return None, None
-    from .claude_provider import default_llm
-    llm = default_llm()                     # live Claude + cache with a key, cache-only without
+    from .providers import default_llm
+    llm = default_llm()                     # live model + cache with a key, cache-only without
     extract = llm if os.environ.get("SEAM_LLM_EXTRACT", "off").lower() == "on" else None
     return llm, extract
 
@@ -165,6 +165,17 @@ class LiveApply(BaseModel):
 
 class AuditQuestion(BaseModel):
     question: str
+
+
+@app.get("/sources")
+def sources():
+    with lock:
+        return engine.sources()
+
+
+@app.get("/sources/content")
+def source_content(path: str):
+    return _guard(lambda: engine.source_content(path))
 
 
 @app.post("/audit/ask")

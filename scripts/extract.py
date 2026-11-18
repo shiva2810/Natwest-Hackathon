@@ -32,9 +32,9 @@ for ev in ds.events:
 
 llm = None
 if args.llm:
-    from seam.claude_provider import default_llm
+    from seam.providers import default_llm
     llm = default_llm()
-    print(f"LLM: {'live Claude + cache' if llm.provider else 'offline (cache only)'}")
+    print(f"LLM: {'live model + cache' if llm.provider else 'offline (cache only)'}")
 bundle, report = build_bundle(ds, llm=llm)
 path = store.save(bundle, Path(args.out), report)
 print(f"wrote {path}")

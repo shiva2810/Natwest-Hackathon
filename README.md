@@ -5,7 +5,7 @@ HR, Finance and Legal checkers feed a seam detector that produces a living compl
 ## Run it
 ```
 uv venv .venv && uv pip install --python .venv -r requirements.txt
-cp .env.example .env                                # paste ANTHROPIC_API_KEY (optional; .env is git-ignored)
+cp .env.example .env                                # paste ANTHROPIC_API_KEY or OPENAI_API_KEY (optional; .env is git-ignored)
 .venv/bin/python -m pytest -q                       # tests (never call a live model)
 .venv/bin/python -m scripts.eval_dataset            # score against data/answer_key: obligations, checks, seams, events
 ./scripts/run_demo.sh --fresh                       # API :8765 + UI :8501 on the real dataset, reset
@@ -28,6 +28,16 @@ Either way you see every before/after, the predicted effect (seams opened/closed
 and nothing changes until a named person presses **Apply for real** (audit-logged as LIVE-n).
 `ui/live_check.py` is a drop-in `render(client)` for Person 3's UI. With the API down, the UI runs
 the engine in-process, so the UI alone can also be hosted (e.g. Streamlit Community Cloud, key as a secret).
+
+## Choosing the LLM (OpenAI, Claude or any OpenAI-compatible API)
+Put the key in `.env` at the repo root (copy `.env.example`; `.env` is git-ignored). One provider is enough:
+```
+SEAM_LLM_PROVIDER=openai          # or anthropic, or auto
+OPENAI_API_KEY=sk-...
+# OPENAI_BASE_URL=https://openrouter.ai/api/v1   # any OpenAI-compatible service
+# SEAM_MODEL=gpt-4o
+```
+Restart the API/UI after editing `.env`. Answers are cached per provider and model in `cache/llm/`; with no key the app replays the committed Claude cache (offline). Code: `seam/providers.py`.
 
 ## How it fits together
 ```

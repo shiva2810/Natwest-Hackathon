@@ -1,8 +1,8 @@
-"""Run the whole flow once through Claude and fill cache/llm/, so the demo is fast and works offline.
+"""Run the whole flow once through the configured model and fill cache/llm/, so the demo is fast and works offline.
 
     .venv/bin/python -m scripts.warm_llm
 
-Needs ANTHROPIC_API_KEY in .env. Uses Claude for policy-text extraction (with the quote check) and
+Needs ANTHROPIC_API_KEY or OPENAI_API_KEY in .env. Uses the model for policy-text extraction (with the quote check) and
 for the referee, over the baseline, all six stream events and every what-if scenario.
 Commit cache/llm/ afterwards: with no key or no network, the same answers are replayed.
 """
@@ -13,13 +13,13 @@ import tempfile
 import time
 from pathlib import Path
 
-from seam.claude_provider import MODEL, default_llm, has_key
+from seam.providers import default_llm, has_key, model_name, provider_name
 from seam.engine import Engine
 
 ROOT = Path(__file__).resolve().parent.parent
 
 if not has_key():
-    sys.exit("No ANTHROPIC_API_KEY in .env (still the placeholder?). Paste the key, save the file, re-run.")
+    sys.exit("No API key in .env (ANTHROPIC_API_KEY or OPENAI_API_KEY; still the placeholder?). Paste the key, save the file, re-run.")
 
 llm = default_llm()
 tmp = Path(tempfile.mkdtemp())
@@ -27,7 +27,7 @@ t0 = time.time()
 e = Engine(ROOT / "data", tmp / "a.jsonl", tmp / "s.json", llm=llm, extract_llm=llm)
 p = e.run()
 rep = e.extraction_report
-print(f"model {MODEL}: baseline in {time.time() - t0:.0f}s")
+print(f"{provider_name()} model {model_name()}: baseline in {time.time() - t0:.0f}s")
 print(f"  extraction via LLM: {rep['llm'].get('files')}")
 print(f"  LLM quotes rejected by the quote check: {len(rep['llm'].get('rejected', []))}")
 for r in rep["llm"].get("rejected", []):

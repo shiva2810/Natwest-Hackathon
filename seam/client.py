@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 from typing import Any
+from urllib.parse import parse_qs, quote
 
 import requests
 
@@ -73,6 +74,10 @@ class SeamClient:
                 return a.stream()
             if parts[:2] == ["events", "stream"]:
                 return a.stream_event(parts[2])
+            if path == "/sources":
+                return a.sources()
+            if path.startswith("/sources/content"):
+                return a.source_content(parse_qs(path.split("?", 1)[1])["path"][0])
             if path == "/audit/ask":
                 return a.audit_ask(AuditQuestion(**body))
             if path.startswith("/audit/scope"):
@@ -144,6 +149,13 @@ class SeamClient:
     def ask(self, question: str) -> dict:
         """Route a question: scoped audit (any mix of HR/Finance/Legal) or a what-if simulation."""
         return self._call("POST", "/audit/ask", {"question": question})
+
+    def sources(self) -> dict:
+        """The data and documents the review is built from, grouped by department."""
+        return self._call("GET", "/sources")
+
+    def source_content(self, file: str) -> dict:
+        return self._call("GET", f"/sources/content?path={quote(file, safe='')}")
 
     def audit_scope(self, domains: list[str]) -> dict:
         return self._call("GET", f"/audit/scope?domains={','.join(domains)}")

@@ -1,4 +1,5 @@
-"""Question-driven audit: route a question to a scope (HR / Finance / Legal, any combination) or a what-if.
+"""Question-driven audit: route a question to a scope (HR / Finance / Legal, any combination), a what-if,
+or a factual question answered only from the documents (seam/qa.py).
 
 Routing: Claude first (if configured), then keywords, then a preset menu. Scoping never recomputes or
 hides anything silently: a seam that needs a department outside the scope is listed as out of scope
@@ -23,6 +24,8 @@ KEYWORDS = {
     "Finance": r"\b(finance|financial|budget|spend|vendor|supplier|purchase|po|approval limit|approver|cost)\w*",
     "Legal": r"\b(legal|contract|dpa|terms|obligation|regulator|approval|gdpr|policy|residency|change control)\w*",
 }
+AUDIT_WORDS = r"\b(compliant|compliance|ready|readiness|launch|audit|passport|pass|passed|passing|fail|failed|failing|check|go/no-go|go-no-go|safe to|ok to)\b"
+QUESTION_WORDS = r"^\s*(what|who|whom|whose|when|where|which|how|why|list|show|does|do|did|is|are|was|were|can|could|has|have|will)\b|\?\s*$"
 ALL_WORDS = r"\b(all|every|full|overall|whole|launch|ready|readiness|passport|go|no-go|everything|audit)\b"
 WHATIF = r"^\s*(what if|what happens if|suppose|if )"
 
@@ -35,32 +38,43 @@ Return ONLY JSON: {{"intent": "audit" | "what_if" | "unclear", "domains": [subse
 Question: {question}"""
 
 
+def _keyword_route(q: str) -> dict[str, Any]:
+    low = q.lower()
+    if re.search(WHATIF, low):
+        return {"intent": "what_if", "domains": list(DOMAINS), "via": "keywords"}
+    hits = [d for d, rx in KEYWORDS.items() if re.search(rx, low)]
+    if re.search(AUDIT_WORDS, low):             # "is HR compliant?", "check Finance and Legal", "ready to launch?"
+        return {"intent": "audit", "domains": hits or list(DOMAINS), "via": "keywords"}
+    if re.search(QUESTION_WORDS, low):          # a lookup: "what is E008's approval limit?" -> answer from the documents
+        return {"intent": "qa", "domains": [], "via": "keywords"}
+    if hits:                                    # a bare topic ("contracts", "HR training") -> audit that department
+        return {"intent": "audit", "domains": hits, "via": "keywords"}
+    if re.search(ALL_WORDS, low):
+        return {"intent": "audit", "domains": list(DOMAINS), "via": "keywords"}
+    return {"intent": "unclear", "domains": [], "via": "keywords"}
+
+
 def route(question: str, llm: Callable[[str], str] | None = None) -> dict[str, Any]:
+    """intent: audit (scoped run), what_if (hypothetical), qa (answer from the documents), unclear (also goes to qa,
+    which declines when the documents don't cover it)."""
     q = question.strip()
     if not q:
         return {"intent": "unclear", "domains": [], "via": "empty"}
+    kw = _keyword_route(q)
     if llm is not None:
         try:
             out = parse_json(llm(PROMPT.format(question=q)))
             intent = out.get("intent")
             domains = [d for d in out.get("domains", []) if d in DOMAINS]
+            if intent == "audit" and kw["intent"] == "qa":
+                return kw                       # a factual lookup is not an audit run, whatever the model said
             if intent == "what_if" or (intent == "audit" and domains):
                 return {"intent": intent, "domains": domains or list(DOMAINS), "via": "llm"}
             if intent == "unclear":
-                return {"intent": "unclear", "domains": [], "via": "llm"}
-        except (OfflineMiss, ValueError, AttributeError, TypeError):
+                return {"intent": "qa" if kw["intent"] == "qa" else "unclear", "domains": [], "via": "llm"}
+        except Exception:                       # no cached answer, bad JSON, provider error: use the keywords
             pass
-        except Exception:  # provider error: fall through to keywords
-            pass
-    low = q.lower()
-    if re.search(WHATIF, low):
-        return {"intent": "what_if", "domains": list(DOMAINS), "via": "keywords"}
-    hits = [d for d, rx in KEYWORDS.items() if re.search(rx, low)]
-    if hits:
-        return {"intent": "audit", "domains": hits, "via": "keywords"}
-    if re.search(ALL_WORDS, low):
-        return {"intent": "audit", "domains": list(DOMAINS), "via": "keywords"}
-    return {"intent": "unclear", "domains": [], "via": "keywords"}
+    return kw
 
 
 def scoped(passport: dict[str, Any], domains: list[str]) -> dict[str, Any]:
@@ -99,5 +113,12 @@ def ask(engine, question: str) -> dict[str, Any]:
             out["simulation"] = engine.propose_what_if(question)
         except Exception as exc:
             out["route"] = {**r, "fallback": f"what-if could not be drafted: {exc}"}
-    engine._log("audit_question", "auditor", {"question": question, "route": out["route"]})
+    else:                                       # qa / unclear: answer from the documents or say it can't be answered
+        from .qa import answer
+        out["answer"] = answer(engine, question)
+    log = {"question": question, "route": out["route"]}
+    if "answer" in out:
+        log["answerable"] = out["answer"]["answerable"]
+        log["sources"] = [c["source"] for c in out["answer"]["citations"]]
+    engine._log("audit_question", "auditor", log)
     return out

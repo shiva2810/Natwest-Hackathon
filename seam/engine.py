@@ -304,12 +304,12 @@ class Engine:
             raise GovernanceError("policy does not allow agents to draft what-ifs")
         from .llm import OfflineMiss
         if self.llm is None:
-            raise WhatIfError("no language model configured: use the form editor, or add ANTHROPIC_API_KEY")
+            raise WhatIfError("no language model configured: use the form editor, or add an API key to .env (ANTHROPIC_API_KEY or OPENAI_API_KEY)")
         try:
             event = propose(question, self.dataset, self.llm)
         except OfflineMiss:
             raise WhatIfError("offline and this question was not asked before: use the form editor, "
-                              "or add ANTHROPIC_API_KEY to .env") from None
+                              "or add an API key to .env (ANTHROPIC_API_KEY or OPENAI_API_KEY)") from None
         sim = self.simulate(event)
         self._log("what_if_proposed", "agent", {"question": question, "event": event,
                                                 "predicted": {k: sim[k] for k in ("opened", "closed", "changed",
@@ -328,6 +328,44 @@ class Engine:
         if reason:
             ev["description"] = f"{ev.get('description', '')} (confirmed by {confirmed_by}: {reason})"
         return self.apply_dataset_event(ev, actor=confirmed_by.strip())
+
+    # ---------- data & documents (left panel) ----------
+
+    DEPT_NAMES = {"hr": "HR", "finance": "Finance", "legal": "Legal", "product": "Product"}
+
+    def sources(self) -> dict[str, Any]:
+        """Every file the review is built from, grouped by department, with live sizes (events change them)."""
+        ds = self.dataset
+        if ds is None:
+            return {"path": str(self.source), "kind": "records.json", "as_of": str(self.bundle.scenario.as_of),
+                    "applied_events": 0, "departments": []}
+        groups: dict[str, list[dict[str, Any]]] = {}
+
+        def add(file: str, kind: str, size: int, unit: str):
+            key, _, name = file.partition("/")
+            groups.setdefault(key, []).append({"file": file, "name": name, "kind": kind, "size": size, "unit": unit})
+
+        for f, rows in ds.tables.items():
+            add(f, "table", len(rows), "rows")
+        for f, text in ds.texts.items():
+            add(f, "document", len([p for p in text.split("\n\n") if p.strip()]), "paragraphs")
+        for f, doc in ds.docs.items():
+            add(f, "record", len(doc) if hasattr(doc, "__len__") else 1, "fields")
+        return {"path": str(self.source), "kind": "folder", "as_of": ds.as_of, "applied_events": len(ds.applied),
+                "departments": [{"key": k, "name": self.DEPT_NAMES.get(k, k.title()),
+                                 "files": sorted(groups[k], key=lambda x: (x["kind"] != "document", x["name"]))}
+                                for k in ("hr", "finance", "legal", "product") if k in groups]}
+
+    def source_content(self, file: str, limit: int = 200) -> dict[str, Any]:
+        """The live content of one source file (so a preview shows applied events too)."""
+        ds = self.dataset
+        if ds is not None and file in ds.tables:
+            return {"file": file, "kind": "table", "total": len(ds.tables[file]), "rows": ds.tables[file][:limit]}
+        if ds is not None and file in ds.texts:
+            return {"file": file, "kind": "document", "text": ds.texts[file]}
+        if ds is not None and file in ds.docs:
+            return {"file": file, "kind": "record", "json": ds.docs[file]}
+        raise GovernanceError(f"unknown source file '{file}'")
 
     def editable(self) -> dict[str, Any]:
         from .whatif import editable

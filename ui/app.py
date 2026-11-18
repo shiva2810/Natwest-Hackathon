@@ -14,6 +14,8 @@ import streamlit.components.v1 as components
 from seam.client import SeamClient, SeamError
 from seam.report import render_report
 from ui.audit_chat import render as audit_chat
+from ui.conflicts import render as conflicts_view
+from ui.data_panel import render as data_panel
 from ui.live_check import render as live_check
 
 st.set_page_config(page_title="Compliance Seam Detector", page_icon="🔗", layout="wide")
@@ -144,15 +146,18 @@ if "last_diff" in st.session_state:
       {'(verified against a full re-check ✓)' if d['selective_matches_full'] else ''}</div>""", unsafe_allow_html=True)
 
 # ---------- sections (persist across reruns, unlike tabs) ----------
-SECTIONS = ["💬 Ask", "🔗 Seams", "🧪 Live check", "✍️ Sign-off", "📄 Report", "🕒 Activity"]
+SECTIONS = ["⚖️ Conflicts", "💬 Ask", "🔗 Seams", "🧪 Live check", "✍️ Sign-off", "📄 Report", "🕒 Activity"]
 nav = (st.segmented_control("Section", SECTIONS, default=SECTIONS[0], key="nav", label_visibility="collapsed")
        if hasattr(st, "segmented_control") else st.radio("Section", SECTIONS, horizontal=True, key="nav"))
 nav = nav or SECTIONS[0]
 
 if nav == SECTIONS[0]:
-    audit_chat(c)
+    conflicts_view(c, p, act)          # default landing view: HR passes, Legal passes, yet they conflict
 
 elif nav == SECTIONS[1]:
+    audit_chat(c)
+
+elif nav == SECTIONS[2]:
     st.caption("Gaps that only appear when departments' data is read together. Ranked by severity and urgency.")
     for s in p["seams"]:
         cls = "waived" if s["status"] == "waived" else SEV.get(s["severity"], "cond")
@@ -174,7 +179,7 @@ elif nav == SECTIONS[1]:
     if not p["seams"]:
         st.success("No cross-department seams. Every department's data agrees.")
 
-elif nav == SECTIONS[2]:
+elif nav == SECTIONS[3]:
     live_check(c)
     st.divider()
     ev_col, sc_col = st.columns(2)
@@ -191,7 +196,7 @@ elif nav == SECTIONS[2]:
                          key=sc["name"], disabled=sc["applied"], width="stretch"):
                 act(c.scenario, sc["name"])
 
-elif nav == SECTIONS[3]:
+elif nav == SECTIONS[4]:
     left, right = st.columns([1, 1])
     with left:
         st.markdown("**Launch decision** · a named person signs; GO is refused while blocking seams are open")
@@ -224,7 +229,7 @@ elif nav == SECTIONS[3]:
         if not p["drafts"]:
             st.caption("No drafts waiting.")
 
-elif nav == SECTIONS[4]:
+elif nav == SECTIONS[5]:
     report_html = render_report(p, c.audit())   # built from the same passport as the screen
     st.download_button("⬇ Download audit report (HTML)", report_html, "compliance-audit-report.html", "text/html",
                        type="primary", help="One self-contained HTML file that opens offline.")
@@ -242,6 +247,8 @@ else:
     st.dataframe(p["evidence_expiring"], width="stretch", hide_index=True)
 
 with st.sidebar:
+    data_panel(c)                      # left panel: the data and documents behind the review
+    st.divider()
     st.markdown("**Demo controls**")
     if st.button("↺ Reset to start", width="stretch"):
         st.session_state.pop("last_diff", None)
