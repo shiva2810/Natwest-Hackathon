@@ -60,7 +60,7 @@ check(len(p["seams"]) == 5 and p["overall"] == "no_go", "expected 5 seams and no
 beat("2. Alone, each department sees only small in-house findings")
 for name in ("HR", "Finance", "Legal"):
     for f in p["departments"][name]["findings"]:
-        print(f"   {name:8} {f['record']:10} {f['status']:8} {f['finding']}")
+        print(f"   {name:8} {f['record']:10} {f['result'].upper():13} {f['finding']}")
 print(f"   Legal self-attests (cannot verify alone): {p['departments']['Legal']['self_attested']}")
 
 beat("3. The seam detector reads across departments")

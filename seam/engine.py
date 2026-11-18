@@ -27,6 +27,7 @@ from .sources import Dataset, EventError, apply_event as apply_file_event, load_
 
 Go = Literal["go", "conditional", "no_go"]
 ORDER = {"go": 0, "conditional": 1, "no_go": 2}
+RESULT = {"met": "passed", "unmet": "failed", "unknown": "needs_review"}   # auditor-facing wording
 STATE_VERSION = 2
 DOC_PATH_TO_PRODUCT = {"accountable_senior_manager", "product_owner", "data_flows", "changes",
                        "release_candidate", "approved_version", "change_control_request_filed"}
@@ -438,7 +439,9 @@ class Engine:
             depts[name] = {
                 "status": status, "own_view": own, "records": len(recs), "unmet": unmet, "unknown": unknown,
                 "open_seams": [s.id for s in touching],
-                "findings": [{"record": r.id, "status": r.status, "basis": r.attributes.get("check", {}).get("basis"),
+                "results": {k: sum(1 for r in recs if RESULT[r.status] == k) for k in ("passed", "failed", "needs_review")},
+                "findings": [{"record": r.id, "status": r.status, "result": RESULT[r.status],
+                              "basis": r.attributes.get("check", {}).get("basis"),
                               "finding": r.attributes.get("check", {}).get("finding"),
                               "items": r.attributes.get("check", {}).get("items", [])}
                              for r in recs if r.status != "met"],

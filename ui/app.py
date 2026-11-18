@@ -44,9 +44,11 @@ right.metric("Sign-off", p["signoff"]["state"].upper(), p["signoff"].get("by") o
 cols = st.columns(len(p["departments"]))
 for col, (name, d) in zip(cols, p["departments"].items()):
     col.metric(name, ICON[d["status"]], f"alone: {ICON[d['own_view']]}", delta_color="off")
+    r = d.get("results", {})
+    col.caption(f"✅ {r.get('passed', 0)} passed · ❌ {r.get('failed', 0)} failed · ❔ {r.get('needs_review', 0)} needs review")
     for f in d["findings"]:
-        col.caption(f"{'⚠️' if f['status'] == 'unmet' else '❔' if f['status'] == 'unknown' else '📝'} "
-                    f"{f['record']}: {f['finding']}")
+        label = {"failed": "❌ FAILED", "needs_review": "❔ NEEDS REVIEW"}.get(f.get("result"), "📝 SELF-ATTESTED")
+        col.caption(f"{label} {f['record']}: {f['finding']}")
 
 if "last_diff" in st.session_state:
     d = st.session_state["last_diff"]

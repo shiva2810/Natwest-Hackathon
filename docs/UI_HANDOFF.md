@@ -36,7 +36,8 @@ p = c.passport()
 For each of `departments.{HR, Finance, Legal, Product}`:
 - `own_view`: what the department sees on its own data
 - `status`: what it is once the seams are counted
-- `findings[]`: in-department issues (`record`, `status`, `finding`, `items[]`)
+- `results`: counts `{passed, failed, needs_review}`. Use this wording on screen
+- `findings[]`: in-department issues (`record`, `result`: `failed`/`needs_review`, `finding`, `items[]`; `status` keeps the internal met/unmet/unknown)
 - `self_attested[]`: Legal rows it **cannot verify alone**. Label these "self-attested"; that is the blind spot.
 
 The story: every department looks mostly fine alone, and the combined view is NO-GO.
